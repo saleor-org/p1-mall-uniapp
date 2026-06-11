@@ -130,6 +130,7 @@
     data.items.forEach((item) => {
       state.commentList.push({
         anonymous: false,
+        orderId: state.id,
         orderItemId: item.id,
         descriptionScores: 5,
         benefitScores: 5,

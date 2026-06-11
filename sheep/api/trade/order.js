@@ -150,7 +150,12 @@ const OrderApi = {
 
   createOrderItemComment: (data) => {
     if (isSaleorBff) {
-      return saleorEmpty.ok(false);
+      return request({
+        url: `${saleorPrefix}/item/create-comment`,
+        method: 'POST',
+        data,
+        custom: { auth: true, showSuccess: true },
+      });
     }
     return request({
       url: '/trade/order/item/create-comment',

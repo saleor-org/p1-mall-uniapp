@@ -5,7 +5,20 @@ const CommentApi = {
   // 获得商品评价分页
   getCommentPage: (spuId, pageNo, pageSize, type) => {
     if (isSaleorBff) {
-      return saleorEmpty.page();
+      return request({
+        url: '/mall/v1/product/comment/page',
+        method: 'GET',
+        params: {
+          spuId,
+          pageNo,
+          pageSize,
+          type,
+        },
+        custom: {
+          showLoading: false,
+          showError: false,
+        },
+      });
     }
     return request({
       url: '/product/comment/page',
