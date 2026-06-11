@@ -38,19 +38,13 @@
             <view v-if="item.spu?.status !== 1 && !state.editMode" class="down-box">
               该商品已下架
             </view>
-            <view v-else-if="item.spu?.stock <= 0 && !state.editMode" class="down-box">
+            <view v-else-if="item.sku?.stock <= 0 && !state.editMode" class="down-box">
               该商品无库存
             </view>
             <s-goods-item
               :img="item.spu.picUrl || item.goods.image"
               :price="item.sku.price"
-              :skuText="
-                item.sku.properties.length > 1
-                  ? item.sku.properties.reduce(
-                      (items2, items) => items2.valueName + ' ' + items.valueName,
-                    )
-                  : item.sku.properties[0].valueName
-              "
+              :skuText="formatSkuText(item.sku)"
               :title="item.spu.name"
               :titleWidth="400"
               priceColor="#FF3000"
@@ -116,6 +110,18 @@
   import { computed, reactive } from 'vue';
   import { fen2yuan } from '@/sheep/hooks/useGoods';
   import { isEmpty } from '@/sheep/helper/utils';
+  import { isSaleorBff } from '@/sheep/helper/saleor';
+
+  function formatSkuText(sku) {
+    const props = sku?.properties || [];
+    if (props.length === 0) {
+      return sku?.name || '';
+    }
+    if (props.length === 1) {
+      return props[0].valueName;
+    }
+    return props.map((p) => p.valueName).join(' ');
+  }
 
   // 隐藏原生tabBar
   uni.hideTabBar({
@@ -166,7 +172,9 @@
       sheep.$helper.toast('请先选择商品');
       return;
     }
-    await validateDeliveryType(state.selectedList.map((item) => item.spu).map((spu) => spu.id));
+    if (!isSaleorBff) {
+      await validateDeliveryType(state.selectedList.map((item) => item.spu).map((spu) => spu.id));
+    }
     sheep.$router.go('/pages/order/confirm', {
       data: JSON.stringify({
         items,
@@ -233,12 +241,10 @@
       cart.delete(cartItem.id);
       return;
     }
-    if (cartItem.goods_num === e) return;
-    cartItem.goods_num = e;
+    if (cartItem.count === e) return;
     cart.update({
-      goods_id: cartItem.id,
-      goods_num: e,
-      goods_sku_price_id: cartItem.goods_sku_price_id,
+      id: cartItem.id,
+      count: e,
     });
   }
 

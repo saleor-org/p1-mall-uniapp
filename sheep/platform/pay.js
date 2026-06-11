@@ -205,8 +205,15 @@ export default class SheepPay {
 
   // 模拟支付
   async mockPay() {
-    const { code } = await this.prepay('mock');
-    code === 0 && this.payResult('success');
+    const { code, data } = await this.prepay('mock');
+    if (code !== 0) {
+      return;
+    }
+    if (data?.status === 10) {
+      this.payResult('success');
+    } else {
+      sheep.$helper.toast('模拟支付未完成，请重试');
+    }
   }
 
   // 支付宝复制链接支付（通过支付宝 wap 支付实现）

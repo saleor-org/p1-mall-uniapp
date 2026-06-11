@@ -80,7 +80,7 @@ const userCenterMenuGrid = [
   diyMenuItem('关于我们', '/pages/public/richtext?title=关于我们', 'about-us.png'),
   diyMenuItem('隐私协议', '/pages/public/richtext?title=隐私协议', 'privacy.png'),
   diyMenuItem('收货地址', '/pages/user/address/list', 'address.png'),
-  diyMenuItem('发票管理', '/pages/public/richtext?title=发票管理', 'invoice.png'),
+  diyMenuItem('发票管理', '/pages/user/invoice/list', 'invoice.png'),
   diyMenuItem('联系客服', '/pages/chat/index', 'chat-index.png'),
 ];
 

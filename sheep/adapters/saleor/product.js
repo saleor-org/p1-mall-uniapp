@@ -71,16 +71,29 @@ export function mapProductDetail(item) {
 
   const variants = item.variants || [];
   const skus = variants.length
-    ? variants.map((v) => ({
-        id: v.id,
-        name: v.name || card.name,
-        picUrl: card.picUrl,
-        price: card.price,
-        marketPrice: stopFen,
-        stock: 99,
-        properties: [],
-        goods_num: 1,
-      }))
+    ? variants.map((v) => {
+        const priceFen = moneyToFen(v.price) || card.price;
+        const marketFen =
+          moneyToFen(v.priceUndiscounted) || stopFen || priceFen;
+        return {
+          id: v.id,
+          name: v.name || card.name,
+          picUrl: card.picUrl,
+          price: priceFen,
+          marketPrice: marketFen > priceFen ? marketFen : priceFen,
+          stock:
+            v.quantityAvailable != null && v.quantityAvailable >= 0
+              ? v.quantityAvailable
+              : 99,
+          properties: (v.properties || []).map((p) => ({
+            propertyId: p.propertyId,
+            propertyName: p.propertyName,
+            valueId: p.valueId,
+            valueName: p.valueName,
+          })),
+          goods_num: 1,
+        };
+      })
     : [
         {
           id: card.slug,

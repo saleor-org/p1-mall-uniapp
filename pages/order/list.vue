@@ -88,6 +88,20 @@
               评价
             </button>
             <button
+              v-if="order.buttons.includes('invoice')"
+              class="tool-btn ss-reset-button"
+              @tap.stop="onInvoiceApply(order.id)"
+            >
+              申请发票
+            </button>
+            <button
+              v-if="order.buttons.includes('invoiceView')"
+              class="tool-btn ss-reset-button"
+              @tap.stop="onInvoiceView(order.id)"
+            >
+              查看发票
+            </button>
+            <button
               v-if="order.buttons.includes('delete')"
               class="delete-btn ss-reset-button"
               @tap.stop="onDelete(order.id)"
@@ -130,6 +144,7 @@
   import sheep from '@/sheep';
   import { concat, isEmpty } from 'lodash-es';
   import OrderApi from '@/sheep/api/trade/order';
+  import InvoiceApi from '@/sheep/api/trade/invoice';
   import { resetPagination } from '@/sheep/helper/utils';
 
   // 数据
@@ -207,6 +222,32 @@
     sheep.$router.go('/pages/goods/comment/add', {
       id,
     });
+  }
+
+  function onInvoiceApply(orderId) {
+    sheep.$router.go('/pages/user/invoice/list', {
+      orderId,
+      mode: 'apply',
+    });
+  }
+
+  async function onInvoiceView(orderId) {
+    const { code, data } = await InvoiceApi.getOrderInvoices(orderId);
+    if (code !== 0 || !data?.invoices?.length) {
+      uni.showToast({ title: '暂无发票', icon: 'none' });
+      return;
+    }
+    const inv = data.invoices[0];
+    if (inv.url) {
+      // #ifdef H5
+      window.open(inv.url, '_blank');
+      // #endif
+      // #ifndef H5
+      uni.setClipboardData({ data: inv.url, success: () => uni.showToast({ title: '链接已复制' }) });
+      // #endif
+    } else {
+      uni.showModal({ title: '发票', content: `发票号：${inv.number}` });
+    }
   }
 
   // 确认收货
@@ -293,11 +334,8 @@
         }
         const { code } = await OrderApi.cancelOrder(orderId);
         if (code === 0) {
-          // 修改数据的状态
-          let index = state.pagination.list.findIndex((order) => order.id === orderId);
-          const orderInfo = state.pagination.list[index];
-          orderInfo.status = 40;
-          handleOrderButtons(orderInfo);
+          resetPagination(state.pagination);
+          await getOrderList();
         }
       },
     });

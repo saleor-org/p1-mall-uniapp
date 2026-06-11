@@ -55,8 +55,8 @@ const cart = defineStore('cart', {
     // 更新购物车
     async update(goodsInfo) {
       const { code } = await CartApi.updateCartCount({
-        id: goodsInfo.goods_id,
-        count: goodsInfo.goods_num,
+        id: goodsInfo.id ?? goodsInfo.goods_id,
+        count: goodsInfo.count ?? goodsInfo.goods_num,
       });
       if (code === 0) {
         await this.getList();
@@ -90,8 +90,9 @@ const cart = defineStore('cart', {
 
     // 全选购物车商品
     async selectAll(flag) {
+      const ids = (this.editMode ? this.list : this.newList).map((item) => item.id);
       const { code } = await CartApi.updateCartSelected({
-        ids: this.list.map((item) => item.id),
+        ids,
         selected: flag,
       });
       if (code === 0) {

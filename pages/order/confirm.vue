@@ -316,7 +316,7 @@
       return;
     }
     // 更新购物车列表，如果来自购物车
-    if (state.orderPayload.items[0].cartId > 0) {
+    if (state.orderPayload.items?.[0]?.cartId) {
       sheep.$store('cart').getList();
     }
 

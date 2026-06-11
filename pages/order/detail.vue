@@ -251,6 +251,20 @@
         >
           评价
         </button>
+        <button
+          class="ss-reset-button cancel-btn"
+          v-if="state.orderInfo.buttons?.includes('invoice')"
+          @tap="onInvoiceApply(state.orderInfo.id)"
+        >
+          申请发票
+        </button>
+        <button
+          class="ss-reset-button cancel-btn"
+          v-if="state.orderInfo.buttons?.includes('invoiceView')"
+          @tap="onInvoiceView(state.orderInfo.id)"
+        >
+          查看发票
+        </button>
       </view>
     </su-fixed>
   </s-layout>
@@ -268,6 +282,7 @@
     handleOrderButtons,
   } from '@/sheep/hooks/useGoods';
   import OrderApi from '@/sheep/api/trade/order';
+  import InvoiceApi from '@/sheep/api/trade/invoice';
   import DeliveryApi from '@/sheep/api/trade/delivery';
   import PayOrderApi from '@/sheep/api/pay/order';
   import PickUpVerify from '@/pages/order/pickUpVerify.vue';
@@ -399,6 +414,32 @@
     sheep.$router.go('/pages/goods/comment/add', {
       id,
     });
+  }
+
+  function onInvoiceApply(orderId) {
+    sheep.$router.go('/pages/user/invoice/list', {
+      orderId,
+      mode: 'apply',
+    });
+  }
+
+  async function onInvoiceView(orderId) {
+    const { code, data } = await InvoiceApi.getOrderInvoices(orderId);
+    if (code !== 0 || !data?.invoices?.length) {
+      uni.showToast({ title: '暂无发票', icon: 'none' });
+      return;
+    }
+    const inv = data.invoices[0];
+    if (inv.url) {
+      // #ifdef H5
+      window.open(inv.url, '_blank');
+      // #endif
+      // #ifndef H5
+      uni.setClipboardData({ data: inv.url, success: () => uni.showToast({ title: '链接已复制' }) });
+      // #endif
+    } else {
+      uni.showModal({ title: '发票', content: `发票号：${inv.number}` });
+    }
   }
 
   const pickUpVerifyRef = ref();

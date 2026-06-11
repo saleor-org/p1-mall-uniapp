@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import dayjs from 'dayjs';
 import $url from '@/sheep/url';
 import { formatDate } from '@/sheep/helper/utils';
+import { isSaleorBff } from '@/sheep/helper/saleor';
 
 /**
  * 格式化销量
@@ -166,6 +167,11 @@ export function formatOrderStatusDescription(order) {
  * @param order 订单
  */
 export function handleOrderButtons(order) {
+  // Saleor BFF 由后端 order_buttons 决定（含申请/查看发票）
+  if (isSaleorBff) {
+    order.buttons = Array.isArray(order.buttons) ? order.buttons : [];
+    return;
+  }
   order.buttons = [];
   if (order.type === 3) {
     // 查看拼团
