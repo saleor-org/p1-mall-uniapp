@@ -5,6 +5,12 @@
   "version": "2026.04",
   "description": "芋道商城，一套代码，同时发行到iOS、Android、H5、微信小程序多个平台，请使用手机扫码快速体验强大功能",
   "scripts": {
+    "dev:h5": "npm run dev:saleor",
+    "dev:saleor": "UNI_INPUT_DIR=. uni --mode saleor",
+    "dev:yudao-full": "UNI_INPUT_DIR=. uni --mode yudao-full",
+    "dev:yudao-local": "UNI_INPUT_DIR=. uni --mode yudao-local",
+    "dev:mp-weixin": "UNI_INPUT_DIR=. uni -p mp-weixin --mode saleor",
+    "build:h5": "UNI_INPUT_DIR=. uni build --mode saleor",
     "prettier": "prettier --write  \"{pages,sheep}/**/*.{js,json,tsx,css,less,scss,vue,html,md}\""
   },
   "repository": "https://github.com/sheepjs/shop.git",
@@ -88,6 +94,9 @@
     }
   },
   "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-5000720260410001",
+    "@dcloudio/uni-components": "3.0.0-5000720260410001",
+    "@dcloudio/uni-h5": "3.0.0-5000720260410001",
     "dayjs": "^1.11.7",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
@@ -98,7 +107,15 @@
     "weixin-js-sdk": "^1.6.0"
   },
   "devDependencies": {
+    "@dcloudio/types": "^3.4.8",
+    "@dcloudio/uni-automator": "3.0.0-5000720260410001",
+    "@dcloudio/uni-cli-shared": "3.0.0-5000720260410001",
+    "@dcloudio/uni-stacktracey": "3.0.0-5000720260410001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5000720260410001",
+    "@vue/runtime-core": "^3.5.11",
     "prettier": "^2.8.7",
-    "vconsole": "^3.15.0"
+    "sass": "^1.77.0",
+    "vconsole": "^3.15.0",
+    "vite": "5.2.8"
   }
 }

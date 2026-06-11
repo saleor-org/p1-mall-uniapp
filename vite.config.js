@@ -7,10 +7,23 @@ import mpliveMainfestPlugin from './sheep/libs/mplive-manifest-plugin';
 
 
 // https://vitejs.dev/config/
-export default (command, mode) => {
+export default ({ mode }) => {
 	const env = loadEnv(mode, __dirname, 'SHOPRO_');
+	const yudaoApiTarget =
+		env.SHOPRO_YUDAO_API_TARGET ||
+		(mode === 'yudao-local' ? 'http://127.0.0.1:48080' : 'http://api-dashboard.yudao.iocoder.cn');
+	const saleorApiTarget = env.SHOPRO_SALEOR_API_TARGET || 'http://127.0.0.1:8010';
+	const enableYudaoProxy =
+		env.SHOPRO_SALEOR_BFF !== '1' && (mode === 'yudao-full' || mode === 'yudao-local');
+	const enableSaleorProxy = env.SHOPRO_SALEOR_BFF === '1';
 	return {
 		envPrefix: "SHOPRO_",
+		resolve: {
+			alias: {
+				'@': path.resolve(__dirname),
+				sheep: path.resolve(__dirname, 'sheep'),
+			},
+		},
 		plugins: [
 			uni(),
 			// viteCompression({
@@ -24,11 +37,37 @@ export default (command, mode) => {
 		],
 		server: {
 			host: true,
-			// open: true,
 			port: env.SHOPRO_DEV_PORT,
 			hmr: {
 				overlay: true,
 			},
+			proxy: enableSaleorProxy
+				? {
+						'/mall': {
+							target: saleorApiTarget,
+							changeOrigin: true,
+							secure: false,
+						},
+						'/system': {
+							target: saleorApiTarget,
+							changeOrigin: true,
+							secure: false,
+						},
+						'/pay': {
+							target: saleorApiTarget,
+							changeOrigin: true,
+							secure: false,
+						},
+					}
+				: enableYudaoProxy
+				? {
+						'/app-api': {
+							target: yudaoApiTarget,
+							changeOrigin: true,
+							secure: false,
+						},
+					}
+				: undefined,
 		},
 	};
 };

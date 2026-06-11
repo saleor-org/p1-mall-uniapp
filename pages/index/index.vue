@@ -93,12 +93,13 @@
     // #endif
   });
 
-  // 下拉刷新
-  onPullDownRefresh(() => {
-    sheep.$store('app').init();
-    setTimeout(function () {
+  // 下拉刷新：仅重载首页装修，避免 init 重复请求租户/登录接口
+  onPullDownRefresh(async () => {
+    try {
+      await sheep.$store('app').refreshHome();
+    } finally {
       uni.stopPullDownRefresh();
-    }, 800);
+    }
   });
 
   onPageScroll(() => {});

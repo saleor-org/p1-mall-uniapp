@@ -151,13 +151,14 @@
 
   // 获得地区数据
   const getAreaData = () => {
-    if (isEmpty(uni.getStorageSync('areaData'))) {
-      AreaApi.getAreaTree().then((res) => {
-        if (res.code === 0) {
-          uni.setStorageSync('areaData', res.data);
-        }
-      });
+    if (!isEmpty(uni.getStorageSync('areaData'))) {
+      return;
     }
+    AreaApi.getAreaTree().then((res) => {
+      if (res.code === 0) {
+        uni.setStorageSync('areaData', res.data);
+      }
+    });
   };
 
   // 保存收货地址

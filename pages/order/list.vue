@@ -193,6 +193,10 @@
 
   // 继续支付
   function onPay(payOrderId) {
+    if (!payOrderId || payOrderId <= 0) {
+      uni.showToast({ title: '支付单无效，请下拉刷新后重试', icon: 'none' });
+      return;
+    }
     sheep.$router.go('/pages/pay/index', {
       id: payOrderId,
     });

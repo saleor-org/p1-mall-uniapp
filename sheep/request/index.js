@@ -40,8 +40,13 @@ let LoadingInstance = {
  * 关闭loading
  */
 function closeLoading() {
-  if (LoadingInstance.count > 0) LoadingInstance.count--;
-  if (LoadingInstance.count === 0) uni.hideLoading();
+  if (LoadingInstance.count <= 0) {
+    return;
+  }
+  LoadingInstance.count--;
+  if (LoadingInstance.count === 0) {
+    uni.hideLoading();
+  }
 }
 
 /**
@@ -111,8 +116,12 @@ http.interceptors.request.use(
  */
 http.interceptors.response.use(
   (response) => {
-    // 约定：如果是 /auth/ 下的 URL 地址，并且返回了 accessToken 说明是登录相关的接口，则自动设置登陆令牌
-    if (response.config.url.indexOf('/member/auth/') >= 0 && response.data?.data?.accessToken) {
+    // 约定：登录相关接口返回 accessToken 时自动写入令牌（芋道 + Saleor BFF）
+    const url = response.config.url || '';
+    if (
+      (url.indexOf('/member/auth/') >= 0 || url.indexOf('/mall/v1/auth/') >= 0) &&
+      response.data?.data?.accessToken
+    ) {
       $store('user').setToken(response.data.data.accessToken, response.data.data.refreshToken);
     }
 
@@ -224,7 +233,10 @@ let requestList = []; // 请求队列
 let isRefreshToken = false; // 是否正在刷新中
 const refreshToken = async (config) => {
   // 如果当前已经是 refresh-token 的 URL 地址，并且还是 401 错误，说明是刷新令牌失败了，直接返回 Promise.reject(error)
-  if (config.url.indexOf('/member/auth/refresh-token') >= 0) {
+  if (
+    config.url.indexOf('/member/auth/refresh-token') >= 0 ||
+    config.url.indexOf('/mall/v1/auth/refresh-token') >= 0
+  ) {
     return Promise.reject('error');
   }
 

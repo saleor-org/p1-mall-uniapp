@@ -1,6 +1,8 @@
 import DiyApi from '@/sheep/api/promotion/diy';
 import { getTenantByWebsite } from '@/sheep/api/infra/tenant';
 import { getTenantId } from '@/sheep/request';
+import { isSaleorBff } from '@/sheep/helper/saleor';
+import { getMockDiyTemplate } from '@/sheep/mock/diy-template';
 import { defineStore } from 'pinia';
 import $platform from '@/sheep/platform';
 import $router from '@/sheep/router';
@@ -113,6 +115,10 @@ const app = defineStore('app', {
         $router.error('InitError', res.msg || '加载失败');
       }
     },
+    /** 首页下拉刷新：只重载装修模板，避免重复走租户/登录链路 */
+    async refreshHome() {
+      await adaptTemplate(this.template, null);
+    },
     // 设置 paramsForTabbar
     setParamsForTabbar(params = {}) {
       this.paramsForTabbar = params;
@@ -131,8 +137,27 @@ const app = defineStore('app', {
   },
 });
 
+/** 本地开发：跳过按域名解析租户（localhost 等在库里通常未配置） */
+const isLocalDevHost = () => {
+  // #ifdef H5
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const host = window.location.hostname;
+    return (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      host.startsWith('10.')
+    );
+  }
+  // #endif
+  return import.meta.env.SHOPRO_SKIP_TENANT_LOOKUP === '1';
+};
+
 /** 初始化租户编号 */
 const adaptTenant = async () => {
+  if (isSaleorBff || isLocalDevHost()) {
+    return;
+  }
   // 1. 获取当前租户 ID
   const oldTenantId = getTenantId();
   let newTenantId = null;
@@ -181,14 +206,33 @@ const adaptTenant = async () => {
 
 /** 初始化装修模版 */
 const adaptTemplate = async (appTemplate, templateId) => {
-  const { data: diyTemplate } = templateId
-    ? // 查询指定模板，一般是预览时使用
-      await DiyApi.getDiyTemplate(templateId)
-    : await DiyApi.getUsedDiyTemplate();
-  // 模板不存在
-  if (!diyTemplate) {
-    $router.error('TemplateError');
+  if (isSaleorBff) {
+    const diyTemplate = getMockDiyTemplate();
+    const tabBar = diyTemplate?.property?.tabBar;
+    if (tabBar) {
+      appTemplate.basic.tabbar = tabBar;
+      if (tabBar?.theme) {
+        appTemplate.basic.theme = tabBar?.theme;
+      }
+    }
+    appTemplate.home = diyTemplate?.home;
+    appTemplate.user = diyTemplate?.user;
     return;
+  }
+  let diyTemplate = null;
+  try {
+    const res = templateId
+      ? await DiyApi.getDiyTemplate(templateId)
+      : await DiyApi.getUsedDiyTemplate();
+    if (res && res.code === 0 && res.data) {
+      diyTemplate = res.data;
+    }
+  } catch (error) {
+    console.warn('[mall-uniapp] DIY template API failed, using local mock:', error);
+  }
+  if (!diyTemplate) {
+    console.warn('[mall-uniapp] Using mock DIY template (demo API unreachable or empty).');
+    diyTemplate = getMockDiyTemplate();
   }
 
   const tabBar = diyTemplate?.property?.tabBar;

@@ -1,8 +1,22 @@
 import request from '@/sheep/request';
+import { isSaleorBff } from '@/sheep/helper/saleor';
+
+const prefix = '/mall/v1/auth';
 
 const AuthUtil = {
-  // 使用手机 + 密码登录
   login: (data) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/login`,
+        method: 'POST',
+        data,
+        custom: {
+          showSuccess: true,
+          loadingMsg: '登录中',
+          successMsg: '登录成功',
+        },
+      });
+    }
     return request({
       url: '/member/auth/login',
       method: 'POST',
@@ -14,8 +28,19 @@ const AuthUtil = {
       },
     });
   },
-  // 使用手机 + 验证码登录
   smsLogin: (data) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/sms-login`,
+        method: 'POST',
+        data,
+        custom: {
+          showSuccess: true,
+          loadingMsg: '登录中',
+          successMsg: '登录成功',
+        },
+      });
+    }
     return request({
       url: '/member/auth/sms-login',
       method: 'POST',
@@ -27,15 +52,23 @@ const AuthUtil = {
       },
     });
   },
-  // 发送手机验证码
   sendSmsCode: (mobile, scene) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/send-sms-code`,
+        method: 'POST',
+        data: { mobile, scene },
+        custom: {
+          loadingMsg: '发送中',
+          showSuccess: true,
+          successMsg: '发送成功',
+        },
+      });
+    }
     return request({
       url: '/member/auth/send-sms-code',
       method: 'POST',
-      data: {
-        mobile,
-        scene,
-      },
+      data: { mobile, scene },
       custom: {
         loadingMsg: '发送中',
         showSuccess: true,
@@ -43,90 +76,66 @@ const AuthUtil = {
       },
     });
   },
-  // 登出系统
   logout: () => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/logout`,
+        method: 'POST',
+      });
+    }
     return request({
       url: '/member/auth/logout',
       method: 'POST',
     });
   },
-  // 刷新令牌
   refreshToken: (refreshToken) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/refresh-token`,
+        method: 'POST',
+        params: { refreshToken },
+        custom: { showLoading: false, showError: false },
+      });
+    }
     return request({
       url: '/member/auth/refresh-token',
       method: 'POST',
-      params: {
-        refreshToken,
-      },
-      custom: {
-        showLoading: false, // 不用加载中
-        showError: false, // 不展示错误提示
-      },
+      params: { refreshToken },
+      custom: { showLoading: false, showError: false },
     });
   },
-  // 社交授权的跳转
   socialAuthRedirect: (type, redirectUri) => {
     return request({
       url: '/member/auth/social-auth-redirect',
       method: 'GET',
-      params: {
-        type,
-        redirectUri,
-      },
-      custom: {
-        showSuccess: true,
-        loadingMsg: '登录中',
-      },
+      params: { type, redirectUri },
+      custom: { showSuccess: true, loadingMsg: '登录中' },
     });
   },
-  // 社交快捷登录
   socialLogin: (type, code, state) => {
     return request({
       url: '/member/auth/social-login',
       method: 'POST',
-      data: {
-        type,
-        code,
-        state,
-      },
-      custom: {
-        showSuccess: true,
-        loadingMsg: '登录中',
-      },
+      data: { type, code, state },
+      custom: { showSuccess: true, loadingMsg: '登录中' },
     });
   },
-  // 微信小程序的一键登录
   weixinMiniAppLogin: (phoneCode, loginCode, state) => {
     return request({
       url: '/member/auth/weixin-mini-app-login',
       method: 'POST',
-      data: {
-        phoneCode,
-        loginCode,
-        state,
-      },
-      custom: {
-        showSuccess: true,
-        loadingMsg: '登录中',
-        successMsg: '登录成功',
-      },
+      data: { phoneCode, loginCode, state },
+      custom: { showSuccess: true, loadingMsg: '登录中', successMsg: '登录成功' },
     });
   },
-  // 创建微信 JS SDK 初始化所需的签名
   createWeixinMpJsapiSignature: (url) => {
     return request({
       url: '/member/auth/create-weixin-jsapi-signature',
       method: 'POST',
-      params: {
-        url,
-      },
-      custom: {
-        showError: false,
-        showLoading: false,
-      },
+      params: { url },
+      custom: { showError: false, showLoading: false },
     });
   },
-  //
 };
 
 export default AuthUtil;

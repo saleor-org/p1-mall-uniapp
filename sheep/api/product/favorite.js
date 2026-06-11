@@ -1,4 +1,5 @@
 import request from '@/sheep/request';
+import { isSaleorBff, saleorEmpty } from '@/sheep/helper/saleor';
 
 const FavoriteApi = {
   // 获得商品收藏分页
@@ -11,6 +12,9 @@ const FavoriteApi = {
   },
   // 检查是否收藏过商品
   isFavoriteExists: (spuId) => {
+    if (isSaleorBff) {
+      return saleorEmpty.false();
+    }
     return request({
       url: '/product/favorite/exits',
       method: 'GET',

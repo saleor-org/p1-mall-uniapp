@@ -160,9 +160,11 @@
   // 提交表单
   async function submit() {
     let data = {
+      orderId: state.orderId,
       orderItemId: state.itemId,
       refundPrice: state.item.payPrice,
       ...formData,
+      way: Number(formData.way),
     };
     const { code } = await AfterSaleApi.createAfterSale(data);
     if (code === 0) {
@@ -202,8 +204,8 @@
       sheep.$helper.toast(`缺少订单信息，请检查`);
       return;
     }
-    state.orderId = options.orderId;
-    state.itemId = parseInt(options.itemId);
+    state.orderId = Number(options.orderId);
+    state.itemId = Number(options.itemId);
 
     // 读取订单信息
     const { code, data } = await OrderApi.getOrderDetail(state.orderId);
@@ -211,7 +213,7 @@
       return;
     }
     state.order = data;
-    state.item = data.items.find((item) => item.id === state.itemId) || {};
+    state.item = data.items.find((item) => item.id == state.itemId || item.saleorLineId === options.itemId) || {};
 
     // 设置选项
     if (state.order.status === 10) {

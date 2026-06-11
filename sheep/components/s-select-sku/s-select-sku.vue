@@ -149,7 +149,7 @@
 
   // 加入购物车
   function onAddCart() {
-    if (state.selectedSku.id <= 0) {
+    if (!state.selectedSku.id) {
       sheep.$helper.toast('请选择规格');
       return;
     }
@@ -163,7 +163,7 @@
 
   // 立即购买
   function onBuy() {
-    if (state.selectedSku.id <= 0) {
+    if (!state.selectedSku.id) {
       sheep.$helper.toast('请选择规格');
       return;
     }
@@ -312,6 +312,9 @@
   changeDisabled(false);
   // 初始化默认选中规格中的第一个，如果不需要，注释这段代码即可
   initDefaultSelect(propertyList, onSelectSku);
+  if (propertyList.length === 0 && skuList.value.length === 1) {
+    state.selectedSku = { ...skuList.value[0], goods_num: state.selectedSku.goods_num || 1 };
+  }
 </script>
 
 <style lang="scss" scoped>

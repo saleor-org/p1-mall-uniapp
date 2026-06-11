@@ -1,51 +1,82 @@
 import request from '@/sheep/request';
+import { isSaleorBff } from '@/sheep/helper/saleor';
+
+const prefix = '/mall/v1/member/address';
 
 const AddressApi = {
-  // 获得用户收件地址列表
   getAddressList: () => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/list`,
+        method: 'GET',
+        custom: { auth: true },
+      });
+    }
     return request({
       url: '/member/address/list',
-      method: 'GET'
+      method: 'GET',
     });
   },
-  // 创建用户收件地址
   createAddress: (data) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/create`,
+        method: 'POST',
+        data,
+        custom: { auth: true, showSuccess: true, successMsg: '保存成功' },
+      });
+    }
     return request({
       url: '/member/address/create',
       method: 'POST',
       data,
-      custom: {
-        showSuccess: true,
-        successMsg: '保存成功'
-      },
+      custom: { showSuccess: true, successMsg: '保存成功' },
     });
   },
-  // 更新用户收件地址
   updateAddress: (data) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/update`,
+        method: 'PUT',
+        data,
+        custom: { auth: true, showSuccess: true, successMsg: '更新成功' },
+      });
+    }
     return request({
       url: '/member/address/update',
       method: 'PUT',
       data,
-      custom: {
-        showSuccess: true,
-        successMsg: '更新成功'
-      },
+      custom: { showSuccess: true, successMsg: '更新成功' },
     });
   },
-  // 获得用户收件地址
   getAddress: (id) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/get`,
+        method: 'GET',
+        params: { id },
+        custom: { auth: true },
+      });
+    }
     return request({
       url: '/member/address/get',
       method: 'GET',
-      params: { id }
+      params: { id },
     });
   },
-  // 删除用户收件地址
   deleteAddress: (id) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/delete`,
+        method: 'DELETE',
+        params: { id },
+        custom: { auth: true },
+      });
+    }
     return request({
       url: '/member/address/delete',
       method: 'DELETE',
-      params: { id }
+      params: { id },
     });
   },
 };

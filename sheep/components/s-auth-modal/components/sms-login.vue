@@ -125,11 +125,11 @@
       }
       return;
     }
-    // 提交数据
-    const { code } = await AuthUtil.smsLogin(state.model);
-    if (code === 0) {
-      closeAuthModal();
+    const result = await AuthUtil.smsLogin(state.model);
+    if (!result || result.code !== 0) {
+      return;
     }
+    closeAuthModal();
   }
 </script>
 

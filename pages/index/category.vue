@@ -131,16 +131,21 @@
     getGoodsList();
   }
   function initMenuIndex() {
-    // TODO @AI：可优化：增加一个 params.id 的兼容
     const appStore = sheep.$store('app');
-    // 处理 tabbar 传参的情况
     const tabbarParams = appStore.paramsForTabbar || {};
     const id = tabbarParams.id;
-    appStore.clearParamsForTabbar(); // 使用完后清理，避免影响下次跳转
-    // 首页点击分类的处理：查找满足条件的分类
-    const foundCategory = state.categoryList.find((category) => category.id === Number(id));
-    // 如果找到则调用 onMenu 自动勾选相应分类，否则调用 onMenu(0) 勾选第一个分类
-    onMenu(foundCategory ? state.categoryList.indexOf(foundCategory) : 0);
+    appStore.clearParamsForTabbar();
+    const foundCategory = state.categoryList.find(
+      (category) => String(category.id) === String(id),
+    );
+    if (foundCategory) {
+      onMenu(state.categoryList.indexOf(foundCategory));
+      return;
+    }
+    const withChildren = state.categoryList.findIndex(
+      (category) => category.children?.length > 0,
+    );
+    onMenu(withChildren >= 0 ? withChildren : 0);
   }
   onShow(async () => {
     await getList();

@@ -146,6 +146,7 @@
   import SpuApi from '@/sheep/api/product/spu';
   import OrderApi from '@/sheep/api/trade/order';
   import { appendSettlementProduct } from '@/sheep/hooks/useGoods';
+  import { isSaleorBff } from '@/sheep/helper/saleor';
 
   // 布局类型
   const LayoutTypeEnum = {
@@ -173,7 +174,7 @@
     },
   });
 
-  const { layoutType, btnBuy, spuIds } = props.data || {};
+  const { layoutType, btnBuy, spuIds = [] } = props.data || {};
   const { marginLeft, marginRight } = props.styles || {};
 
   // 购买按钮样式
@@ -236,10 +237,25 @@
     return data;
   }
 
+  async function loadGoodsList() {
+    if (spuIds.length > 0) {
+      return getGoodsListByIds(spuIds.join(','));
+    }
+    if (isSaleorBff) {
+      const { code, data } = await SpuApi.getSpuPage({ pageNo: 1, pageSize: 10 });
+      if (code === 0 && data?.list?.length) {
+        return data.list;
+      }
+    }
+    return [];
+  }
+
   // 初始化
   onMounted(async () => {
-    // 加载商品列表
-    state.goodsList = await getGoodsListByIds(spuIds.join(','));
+    state.goodsList = await loadGoodsList();
+    if (!state.goodsList.length) {
+      return;
+    }
     // 拼接结算信息（营销）
     await OrderApi.getSettlementProduct(state.goodsList.map((item) => item.id).join(',')).then(
       (res) => {

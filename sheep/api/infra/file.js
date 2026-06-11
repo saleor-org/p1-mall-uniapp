@@ -1,5 +1,6 @@
 import { baseUrl, apiPath, tenantId } from '@/sheep/config';
 import request, { getAccessToken } from '@/sheep/request';
+import { isSaleorBff } from '@/sheep/helper/saleor';
 
 const FileApi = {
   // 上传文件
@@ -7,9 +8,12 @@ const FileApi = {
     uni.showLoading({
       title: '上传中',
     });
+    const uploadUrl = isSaleorBff
+      ? baseUrl + '/mall/v1/infra/file/upload'
+      : baseUrl + apiPath + '/infra/file/upload';
     return new Promise((resolve, reject) => {
       uni.uploadFile({
-        url: baseUrl + apiPath + '/infra/file/upload',
+        url: uploadUrl,
         filePath: file,
         name: 'file',
         header: {
@@ -22,10 +26,11 @@ const FileApi = {
         },
         success: (uploadFileRes) => {
           let result = JSON.parse(uploadFileRes.data);
-          if (result.error === 1) {
+          const failed = isSaleorBff ? result.code !== 0 : result.error === 1;
+          if (failed) {
             uni.showToast({
               icon: 'none',
-              title: result.msg,
+              title: result.msg || '上传失败',
             });
           } else {
             return resolve(result);

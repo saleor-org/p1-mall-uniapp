@@ -128,7 +128,6 @@
     if (!!uni.getStorageSync('areaData')) {
       return;
     }
-    // 提前加载省市区数据
     AreaApi.getAreaTree().then((res) => {
       if (res.code === 0) {
         uni.setStorageSync('areaData', res.data);

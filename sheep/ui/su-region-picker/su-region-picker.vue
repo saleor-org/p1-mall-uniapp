@@ -86,7 +86,7 @@
       default: '确认',
     },
   });
-  const areaData = uni.getStorageSync('areaData');
+  const areaData = computed(() => uni.getStorageSync('areaData') || []);
 
   const getSizeByNameLength = (name) => {
     let length = name.length;
@@ -103,13 +103,15 @@
   });
   const emits = defineEmits(['confirm', 'cancel', 'change']);
 
-  const provinceList = areaData;
+  const provinceList = computed(() => areaData.value);
 
   const cityList = computed(() => {
-    return areaData[state.currentIndex[0]].children;
+    const list = areaData.value;
+    if (!list.length) return [];
+    return list[state.currentIndex[0]]?.children || [];
   });
   const districtList = computed(() => {
-    return cityList.value[state.currentIndex[1]]?.children;
+    return cityList.value[state.currentIndex[1]]?.children || [];
   });
   // 标识滑动开始，只有微信小程序才有这样的事件
   const pickstart = () => {
@@ -156,9 +158,10 @@
     if (state.moving) return;
     // #endif
     let index = state.currentIndex;
-    let province = provinceList[index[0]];
+    let province = provinceList.value[index[0]];
     let city = cityList.value[index[1]];
     let district = districtList.value[index[2]];
+    if (!province || !city || !district) return;
     let result = {
       province_name: province.name,
       province_id: province.id,

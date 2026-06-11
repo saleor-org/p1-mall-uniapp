@@ -12,6 +12,8 @@ export function getTenantByWebsite(website) {
     params: { website },
     custom: {
       isToken: false, // 避免登录情况下，跨租户访问被拦截
+      showLoading: false,
+      showError: false,
     },
   });
 }

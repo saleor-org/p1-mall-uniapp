@@ -1,8 +1,11 @@
 import request from '@/sheep/request';
+import { isSaleorBff, saleorEmpty } from '@/sheep/helper/saleor';
 
 const ActivityApi = {
-  // 获得单个商品，进行中的拼团、秒杀、砍价活动信息
   getActivityListBySpuId: (spuId) => {
+    if (isSaleorBff) {
+      return saleorEmpty.list();
+    }
     return request({
       url: '/promotion/activity/list-by-spu-id',
       method: 'GET',

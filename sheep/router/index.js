@@ -1,5 +1,6 @@
 import $store from '@/sheep/store';
 import { showAuthModal, showShareModal } from '@/sheep/hooks/useModal';
+import { isSaleorBlockedRoute } from '@/sheep/helper/saleor';
 import { isNumber, isString, isEmpty, startsWith, isObject, isNil, clone } from 'lodash-es';
 import throttle from '@/sheep/helper/throttle';
 
@@ -46,6 +47,11 @@ const _go = (
     if (!isNil(path.params)) {
       query = paramsToQuery(path.params);
     }
+  }
+
+  if (isSaleorBlockedRoute(page)) {
+    uni.showToast({ title: '暂未开放', icon: 'none' });
+    return;
   }
 
   const nextRoute = ROUTES_MAP[page];

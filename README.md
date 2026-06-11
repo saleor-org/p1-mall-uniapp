@@ -9,6 +9,7 @@
 
 ## 🐶 新手必读
 
+* **Saleor 项目本地开发速查：[DEV.md](./DEV.md)**（`dev:yudao-full` vs `dev:saleor` 用哪个后台）
 * 演示地址：<https://doc.iocoder.cn/mall-preview/>
 * 启动文档：<https://doc.iocoder.cn/quick-start/>
 * 视频教程：<https://doc.iocoder.cn/video/>

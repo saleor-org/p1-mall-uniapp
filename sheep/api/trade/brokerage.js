@@ -1,8 +1,12 @@
 import request from '@/sheep/request';
+import { isSaleorBff, saleorEmpty } from '@/sheep/helper/saleor';
 
 const BrokerageApi = {
   // 绑定分销用户
   bindBrokerageUser: (data) => {
+    if (isSaleorBff) {
+      return saleorEmpty.ok(true);
+    }
     return request({
       url: '/trade/brokerage-user/bind',
       method: 'PUT',
@@ -11,6 +15,9 @@ const BrokerageApi = {
   },
   // 获得个人分销信息
   getBrokerageUser: () => {
+    if (isSaleorBff) {
+      return saleorEmpty.ok(null);
+    }
     return request({
       url: '/trade/brokerage-user/get',
       method: 'GET',
@@ -18,6 +25,9 @@ const BrokerageApi = {
   },
   // 获得个人分销统计
   getBrokerageUserSummary: () => {
+    if (isSaleorBff) {
+      return saleorEmpty.ok({ brokeragePrice: 0, frozenPrice: 0, withdrawPrice: 0 });
+    }
     return request({
       url: '/trade/brokerage-user/get-summary',
       method: 'GET',
@@ -25,6 +35,9 @@ const BrokerageApi = {
   },
   // 获得分销记录分页
   getBrokerageRecordPage: (params) => {
+    if (isSaleorBff) {
+      return saleorEmpty.page();
+    }
     if (params.status === undefined) {
       delete params.status;
     }

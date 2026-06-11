@@ -13,7 +13,13 @@
         </view>
         <view>
           <view class="nickname-box ss-flex ss-col-center">
-            <view class="nick-name ss-m-r-20">{{ userInfo?.nickname || nickname }}</view>
+            <view
+              class="nick-name ss-m-r-20"
+              :class="{ 'nick-name-login': !isLogin }"
+              @tap="onNicknameTap"
+            >
+              {{ userInfo?.nickname || nickname }}
+            </view>
           </view>
         </view>
       </view>
@@ -113,6 +119,12 @@
     };
   });
 
+  function onNicknameTap() {
+    if (!isLogin.value) {
+      showAuthModal('smsLogin');
+    }
+  }
+
   // 绑定手机号
   function onBind() {
     showAuthModal('changeMobile');
@@ -140,6 +152,10 @@
       font-weight: 400;
       color: #333333;
       line-height: normal;
+    }
+
+    .nick-name-login {
+      color: var(--ui-BG-Main);
     }
 
     .vip-img {

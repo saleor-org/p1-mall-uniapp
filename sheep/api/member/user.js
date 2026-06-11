@@ -1,8 +1,15 @@
 import request from '@/sheep/request';
+import { isSaleorBff } from '@/sheep/helper/saleor';
 
 const UserApi = {
-  // 获得基本信息
   getUserInfo: () => {
+    if (isSaleorBff) {
+      return request({
+        url: '/mall/v1/member/user/get',
+        method: 'GET',
+        custom: { showLoading: false, auth: true },
+      });
+    }
     return request({
       url: '/member/user/get',
       method: 'GET',
@@ -14,6 +21,18 @@ const UserApi = {
   },
   // 修改基本信息
   updateUser: (data) => {
+    if (isSaleorBff) {
+      return request({
+        url: '/mall/v1/member/user/update',
+        method: 'PUT',
+        data,
+        custom: {
+          auth: true,
+          showSuccess: true,
+          successMsg: '更新成功',
+        },
+      });
+    }
     return request({
       url: '/member/user/update',
       method: 'PUT',
@@ -27,6 +46,19 @@ const UserApi = {
   },
   // 修改用户手机
   updateUserMobile: (data) => {
+    if (isSaleorBff) {
+      return request({
+        url: '/mall/v1/member/user/update-mobile',
+        method: 'PUT',
+        data,
+        custom: {
+          auth: true,
+          loadingMsg: '验证中',
+          showSuccess: true,
+          successMsg: '修改成功',
+        },
+      });
+    }
     return request({
       url: '/member/user/update-mobile',
       method: 'PUT',
