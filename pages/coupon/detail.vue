@@ -29,7 +29,7 @@
                   ? 'use-btn' // 优惠劵模版（可领取）、优惠劵（可使用）
                   : 'disable-btn'
               "
-              :disabled="!state.coupon.canTake"
+              :disabled="state.id > 0 ? !state.coupon.canTake : state.coupon.status !== 1"
               @click="getCoupon"
             >
               <text v-if="state.id > 0">{{ state.coupon.canTake ? '立即领取' : '已领取' }}</text>

@@ -38,7 +38,12 @@ const CouponApi = {
   // 获得优惠劵模版分页
   getCouponTemplatePage: (params) => {
     if (isSaleorBff) {
-      return saleorEmpty.page();
+      return request({
+        url: `${saleorPrefix}/template-page`,
+        method: 'GET',
+        params,
+        custom: { showLoading: false, auth: true },
+      });
     }
     return request({
       url: '/promotion/coupon-template/page',
@@ -49,7 +54,12 @@ const CouponApi = {
   // 获得优惠劵模版
   getCouponTemplate: (id) => {
     if (isSaleorBff) {
-      return saleorEmpty.ok(null);
+      return request({
+        url: `${saleorPrefix}/get`,
+        method: 'GET',
+        params: { id },
+        custom: { showLoading: false, auth: true },
+      });
     }
     return request({
       url: '/promotion/coupon-template/get',
@@ -105,7 +115,12 @@ const CouponApi = {
   // 获得优惠劵
   getCoupon: (id) => {
     if (isSaleorBff) {
-      return saleorEmpty.ok(null);
+      return request({
+        url: `${saleorPrefix}/get`,
+        method: 'GET',
+        params: { id },
+        custom: { showLoading: false, auth: true },
+      });
     }
     return request({
       url: '/promotion/coupon/get',

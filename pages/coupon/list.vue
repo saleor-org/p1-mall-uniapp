@@ -183,12 +183,9 @@
       getData();
       // 我的优惠劵
     } else {
-      Option.type === 'geted'
-        ? (state.currentTab = 1)
-        : Option.type === 'used'
-        ? (state.currentTab = 2)
-        : (state.currentTab = 3);
-      state.type = state.currentTab;
+      const tab = Option.type === 'geted' ? 1 : Option.type === 'used' ? 2 : 3;
+      state.currentTab = tab;
+      state.type = tabMaps[tab].value;
       getCoupon();
     }
   });
