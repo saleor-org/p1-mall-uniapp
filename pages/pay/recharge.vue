@@ -77,23 +77,38 @@
     state.recharge_money = fen2yuan(e);
   }
 
+  function rechargeAmountFen() {
+    const yuan = Number(String(state.recharge_money || '').trim());
+    if (!Number.isFinite(yuan) || yuan <= 0) {
+      return 0;
+    }
+    return Math.round(yuan * 100);
+  }
+
   // 获得钱包充值套餐列表
   async function getRechargeTabs() {
-    const { code, data } = await PayWalletApi.getWalletRechargePackageList();
+    const { code, data, msg } = await PayWalletApi.getWalletRechargePackageList();
     if (code !== 0) {
+      sheep.$helper.toast(msg || '充值套餐加载失败');
       return;
     }
-    state.packageList = data;
+    state.packageList = data || [];
   }
 
   // 发起支付
   async function onConfirm() {
-    const { code, data } = await PayWalletApi.createWalletRecharge({
-      packageId: state.packageList.find((item) => fen2yuan(item.payPrice) === state.recharge_money)
-        ?.id,
-      payPrice: state.recharge_money * 100,
+    const payPriceFen = rechargeAmountFen();
+    if (payPriceFen <= 0) {
+      sheep.$helper.toast('请输入有效充值金额');
+      return;
+    }
+    const matched = state.packageList.find((item) => Number(item.payPrice) === payPriceFen);
+    const { code, data, msg } = await PayWalletApi.createWalletRecharge({
+      packageId: matched?.id,
+      payPrice: payPriceFen,
     });
     if (code !== 0) {
+      sheep.$helper.toast(msg || '创建充值单失败');
       return;
     }
     // #ifdef MP

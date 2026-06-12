@@ -16,7 +16,7 @@
           <view class="money-num">{{
             state.showMoney ? fen2yuan(userWallet.balance) : '*****'
           }}</view>
-          <button class="ss-reset-button topup-btn" @tap="sheep.$router.go('/pages/pay/recharge')">
+          <button class="ss-reset-button topup-btn" @tap="onRecharge">
             充值
           </button>
         </view>
@@ -69,7 +69,7 @@
             </view>
           </view>
           <text class="time">
-            {{ sheep.$helper.timeFormat(state.createTime, 'yyyy-mm-dd hh:MM:ss') }}
+            {{ sheep.$helper.timeFormat(item.createTime, 'yyyy-mm-dd hh:MM:ss') }}
           </text>
         </view>
       </view>
@@ -131,6 +131,10 @@
   ];
 
   const userWallet = computed(() => sheep.$store('user').userWallet);
+
+  function onRecharge() {
+    sheep.$router.go('/pages/pay/recharge');
+  }
 
   // 格式化时间段
   const dateFilterText = computed(() => {

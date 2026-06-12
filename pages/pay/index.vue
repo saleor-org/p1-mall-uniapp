@@ -184,7 +184,7 @@
     if (code !== 0) {
       return;
     }
-    state.payMethods = getPayMethods(data);
+    state.payMethods = getPayMethods(data, state.orderType);
     state.payMethods.find((item) => {
       if (item.value && !item.disabled) {
         state.payment = item.value;

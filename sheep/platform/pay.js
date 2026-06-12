@@ -199,8 +199,15 @@ export default class SheepPay {
 
   // 余额支付
   async walletPay() {
-    const { code } = await this.prepay('wallet');
-    code === 0 && this.payResult('success');
+    const { code, data } = await this.prepay('wallet');
+    if (code !== 0) {
+      return;
+    }
+    if (data?.status === 10) {
+      this.payResult('success');
+    } else {
+      sheep.$helper.toast('余额支付未完成，请重试');
+    }
   }
 
   // 模拟支付
@@ -314,7 +321,7 @@ export default class SheepPay {
   }
 }
 
-export function getPayMethods(channels) {
+export function getPayMethods(channels, orderType = 'goods') {
   const payMethods = [
     {
       icon: '/static/img/shop/pay/wechat.png',
@@ -369,9 +376,9 @@ export function getPayMethods(channels) {
   ) {
     alipayMethod.disabled = false;
   }
-  // 3. 处理【余额支付】
+  // 3. 处理【余额支付】（充值单不可用余额支付）
   const walletMethod = payMethods[2];
-  if (channels.includes('wallet')) {
+  if (channels.includes('wallet') && orderType !== 'recharge') {
     walletMethod.disabled = false;
   }
   // 4. 处理【苹果支付】TODO 芋艿：未来接入
