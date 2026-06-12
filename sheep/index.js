@@ -5,6 +5,7 @@ import $platform from '@/sheep/platform';
 import $helper from '@/sheep/helper';
 import zIndex from '@/sheep/config/zIndex.js';
 import $store from '@/sheep/store';
+import { installRouteAuthInterceptor } from '@/sheep/helper/auth';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import duration from 'dayjs/plugin/duration';
@@ -31,6 +32,12 @@ export async function ShoproInit() {
 
   // 平台初始化加载(各平台provider提供不同的加载流程)
   $platform.load();
+
+  // 对齐 storage token 与 Pinia 登录态
+  $store('user').syncLoginFromStorage();
+
+  // 拦截 uni 原生跳转，防止绕过 $router.go 进入需登录页
+  installRouteAuthInterceptor();
 
   if (process.env.NODE_ENV === 'development') {
     ShoproDebug();

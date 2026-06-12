@@ -9,6 +9,7 @@ import $store from '@/sheep/store';
 import $platform from '@/sheep/platform';
 import { showAuthModal } from '@/sheep/hooks/useModal';
 import AuthUtil from '@/sheep/api/member/auth';
+import { syncLoginFromStorage } from '@/sheep/helper/auth';
 import { getTerminal } from '@/sheep/helper/const';
 
 const options = {
@@ -77,9 +78,12 @@ const http = new Request({
 http.interceptors.request.use(
   (config) => {
     // 自定义处理【auth 授权】：必须登录的接口，则跳出 AuthModal 登录弹窗
-    if (config.custom.auth && !$store('user').isLogin) {
-      showAuthModal();
-      return Promise.reject();
+    if (config.custom.auth) {
+      syncLoginFromStorage();
+      if (!$store('user').isLogin) {
+        showAuthModal();
+        return Promise.reject();
+      }
     }
 
     // 自定义处理【loading 加载中】：如果需要显示 loading，则显示 loading

@@ -1,6 +1,7 @@
 import $store from '@/sheep/store';
 import { showAuthModal, showShareModal } from '@/sheep/hooks/useModal';
 import { isSaleorBlockedRoute } from '@/sheep/helper/saleor';
+import { syncLoginFromStorage } from '@/sheep/helper/auth';
 import { isNumber, isString, isEmpty, startsWith, isObject, isNil, clone } from 'lodash-es';
 import throttle from '@/sheep/helper/throttle';
 
@@ -64,6 +65,7 @@ const _go = (
   }
 
   // 页面登录拦截
+  syncLoginFromStorage();
   if (nextRoute.meta?.auth && !$store('user').isLogin) {
     showAuthModal();
     return;

@@ -54,6 +54,12 @@ platform = 'miniProgram';
 provider = 'wechat';
 // #endif
 
+// #ifdef MP-TOUTIAO
+name = 'DouyinMiniProgram';
+platform = 'douyinMiniProgram';
+provider = 'toutiao';
+// #endif
+
 // #ifdef MP-ALIPAY 
 name = 'alipayMiniProgram';
 platform = 'alipayMiniProgram';

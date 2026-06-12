@@ -1,5 +1,9 @@
 <template>
   <s-layout title="确认订单">
+    <view v-if="state.loading" class="confirm-loading ss-flex ss-row-center ss-col-center">
+      <text class="confirm-loading-text">加载中...</text>
+    </view>
+    <template v-else-if="state.pageReady">
     <!-- 头部地址选择【配送地址】【自提地址】 -->
     <AddressSelection v-model="addressState" />
 
@@ -211,12 +215,14 @@
         </view>
         <button
           class="ss-reset-button ui-BG-Main-Gradient ss-r-40 submit-btn ui-Shadow-Main"
+          :disabled="!state.pageReady"
           @tap="onConfirm"
         >
           提交订单
         </button>
       </view>
     </su-fixed>
+    </template>
   </s-layout>
 </template>
 
@@ -229,6 +235,8 @@
   import TradeConfigApi from '@/sheep/api/trade/config';
   import { fen2yuan } from '@/sheep/hooks/useGoods';
   import { DeliveryTypeEnum } from '@/sheep/helper/const';
+  import { requirePageAuth } from '@/sheep/helper/auth';
+  import { showAuthModal } from '@/sheep/hooks/useModal';
 
   const state = reactive({
     orderPayload: {},
@@ -239,8 +247,9 @@
     showCoupon: false, // 是否展示优惠劵
     couponInfo: [], // 优惠劵列表
     showDiscount: false, // 是否展示营销活动
-    // ========== 积分 ==========
     pointStatus: false, //是否使用积分
+    pageReady: false,
+    loading: true,
   });
 
   const addressState = ref({
@@ -270,6 +279,14 @@
 
   // 提交订单
   function onConfirm() {
+    if (!sheep.$store('user').isLogin) {
+      showAuthModal();
+      return;
+    }
+    if (!state.pageReady) {
+      sheep.$helper.toast('订单信息加载中，请稍候');
+      return;
+    }
     if (addressState.value.deliveryType === 1 && !addressState.value.addressInfo.id) {
       sheep.$helper.toast('请选择收货地址');
       return;
@@ -297,6 +314,10 @@
 
   // 创建订单&跳转
   async function submitOrder() {
+    if (!sheep.$store('user').isLogin) {
+      showAuthModal();
+      return;
+    }
     const { code, data } = await OrderApi.createOrder({
       items: state.orderPayload.items,
       couponId: state.orderPayload.couponId,
@@ -361,42 +382,69 @@
     return code;
   }
 
+  async function tryLoadSettlement() {
+    addressState.value.deliveryType = DeliveryTypeEnum.EXPRESS.type;
+    if ((await getOrderInfo()) === 0) {
+      return true;
+    }
+    if (addressState.value.isPickUp) {
+      addressState.value.deliveryType = DeliveryTypeEnum.PICK_UP.type;
+      if ((await getOrderInfo()) === 0) {
+        return true;
+      }
+    }
+    addressState.value.deliveryType = undefined;
+    return (await getOrderInfo()) === 0;
+  }
+
+  function leaveConfirmPage() {
+    uni.navigateBack({
+      fail: () => {
+        uni.switchTab({ url: '/pages/index/index' });
+      },
+    });
+  }
+
   onLoad(async (options) => {
-    // 解析参数
-    if (!options.data) {
-      sheep.$helper.toast('参数不正确，请检查！');
+    if (!requirePageAuth()) {
+      state.loading = false;
       return;
     }
-    state.orderPayload = JSON.parse(options.data);
 
-    // 获取交易配置
+    if (!options.data) {
+      sheep.$helper.toast('参数不正确，请检查！');
+      state.loading = false;
+      leaveConfirmPage();
+      return;
+    }
+    try {
+      state.orderPayload = JSON.parse(options.data);
+    } catch {
+      sheep.$helper.toast('参数不正确，请检查！');
+      state.loading = false;
+      leaveConfirmPage();
+      return;
+    }
+
     const { data, code } = await TradeConfigApi.getTradeConfig();
     if (code === 0) {
       addressState.value.isPickUp = data.deliveryPickUpEnabled;
     }
 
-    // 价格计算
-    // 情况一：先自动选择“快递物流”
-    addressState.value.deliveryType = DeliveryTypeEnum.EXPRESS.type;
-    let orderCode = await getOrderInfo();
-    if (orderCode === 0) {
-      return;
+    state.pageReady = await tryLoadSettlement();
+    state.loading = false;
+
+    if (!state.pageReady) {
+      sheep.$helper.toast('订单结算失败，请先登录或稍后重试');
+      setTimeout(leaveConfirmPage, 1500);
     }
-    // 情况二：失败，再自动选择“门店自提”
-    if (addressState.value.isPickUp) {
-      addressState.value.deliveryType = DeliveryTypeEnum.PICK_UP.type;
-      let orderCode = await getOrderInfo();
-      if (orderCode === 0) {
-        return;
-      }
-    }
-    // 情况三：都失败，则不选择
-    addressState.value.deliveryType = undefined;
-    await getOrderInfo();
   });
 
   // 使用 watch 监听地址和配送方式的变化
   watch(addressState, async (newAddress, oldAddress) => {
+    if (!state.pageReady) {
+      return;
+    }
     // 如果收货地址或配送方式有变化，则重新计算价格
     if (
       newAddress.addressInfo.id !== oldAddress.addressInfo.id ||
@@ -525,5 +573,14 @@
   .cicon-box {
     font-size: 36rpx;
     color: #999999;
+  }
+
+  .confirm-loading {
+    min-height: 60vh;
+  }
+
+  .confirm-loading-text {
+    font-size: 28rpx;
+    color: $dark-9;
   }
 </style>

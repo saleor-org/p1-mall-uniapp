@@ -46,6 +46,21 @@ const user = defineStore('user', {
   }),
 
   actions: {
+    /** 与 storage 中的 token 对齐登录态（页面深链、自动化注入 token 等场景） */
+    syncLoginFromStorage() {
+      const token = uni.getStorageSync('token');
+      const loggedIn = !!token;
+      if (loggedIn !== this.isLogin) {
+        this.isLogin = loggedIn;
+      }
+      if (!loggedIn && (this.userInfo?.mobile || this.userInfo?.nickname)) {
+        this.userInfo = clone(defaultUserInfo);
+        this.userWallet = clone(defaultUserWallet);
+        this.numData = cloneDeep(defaultNumData);
+      }
+      return this.isLogin;
+    },
+
     // 获取用户信息
     async getInfo() {
       const { code, data } = await UserApi.getUserInfo();

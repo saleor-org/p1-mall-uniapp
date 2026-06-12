@@ -82,6 +82,7 @@
   import PayOrderApi from '@/sheep/api/pay/order';
   import PayChannelApi from '@/sheep/api/pay/channel';
   import { getPayMethods, goPayResult } from '@/sheep/platform/pay';
+  import { requirePageAuth } from '@/sheep/helper/auth';
 
   const userWallet = computed(() => sheep.$store('user').userWallet);
 
@@ -193,6 +194,9 @@
   }
 
   onLoad((options) => {
+    if (!requirePageAuth()) {
+      return;
+    }
     if (
       sheep.$platform.name === 'WechatOfficialAccount' &&
       sheep.$platform.os === 'ios' &&

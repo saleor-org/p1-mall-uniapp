@@ -378,8 +378,8 @@
   }
 
   onLoad(async (options) => {
-    if (options.type) {
-      state.currentTab = options.type;
+    if (options.type !== undefined && options.type !== null && options.type !== '') {
+      state.currentTab = Number(options.type);
     }
     await getOrderList();
   });

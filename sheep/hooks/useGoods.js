@@ -342,7 +342,11 @@ function getDayjsTime(time) {
  * @returns {string} 元，例如说 1.00 元
  */
 export function fen2yuan(price) {
-  return (price / 100.0).toFixed(2);
+  const n = Number(price);
+  if (!Number.isFinite(n)) {
+    return '0.00';
+  }
+  return (n / 100.0).toFixed(2);
 }
 
 /**

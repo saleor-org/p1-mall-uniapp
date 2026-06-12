@@ -22,6 +22,10 @@ export default ({ mode }) => {
 			alias: {
 				'@': path.resolve(__dirname),
 				sheep: path.resolve(__dirname, 'sheep'),
+				// mp-weixin CLI 无 uni-h5-vite 的 vue 重定向，需显式指向 dcloudio 补丁版
+				...(process.env.UNI_PLATFORM === 'mp-weixin'
+					? { vue: '@dcloudio/uni-h5-vue' }
+					: {}),
 			},
 		},
 		plugins: [

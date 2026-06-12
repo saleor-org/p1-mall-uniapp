@@ -7,7 +7,9 @@ export const TerminalEnum = {
   UNKNOWN: 0, // 未知, 目的：在无法解析到 terminal 时，使用它
   WECHAT_MINI_PROGRAM: 10, //微信小程序
   WECHAT_WAP: 11, // 微信公众号
-  H5: 20, // H5 网页
+  DOUYIN_MINI_PROGRAM: 12, // 抖音小程序
+  H5: 20, // H5 网页（手机浏览器）
+  PC_H5: 21, // 电脑端 H5（由 BFF 根据 User-Agent 细化）
   APP: 31, // 手机 App
 };
 
@@ -18,7 +20,7 @@ export const TerminalEnum = {
  */
 export const getTerminal = () => {
   const platformType = uni.getAppBaseInfo().uniPlatform;
-  // 与后端terminal枚举一一对应
+  // 与后端 terminal 枚举一一对应
   switch (platformType) {
     case 'app':
       return TerminalEnum.APP;
@@ -26,6 +28,8 @@ export const getTerminal = () => {
       return TerminalEnum.H5;
     case 'mp-weixin':
       return TerminalEnum.WECHAT_MINI_PROGRAM;
+    case 'mp-toutiao':
+      return TerminalEnum.DOUYIN_MINI_PROGRAM;
     default:
       return TerminalEnum.UNKNOWN;
   }
