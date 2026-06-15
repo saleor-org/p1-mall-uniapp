@@ -113,6 +113,14 @@ const AuthUtil = {
     });
   },
   socialLogin: (type, code, state) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/social-login`,
+        method: 'POST',
+        data: { type, code, state },
+        custom: { showSuccess: true, loadingMsg: '登录中' },
+      });
+    }
     return request({
       url: '/member/auth/social-login',
       method: 'POST',
@@ -121,6 +129,14 @@ const AuthUtil = {
     });
   },
   weixinMiniAppLogin: (phoneCode, loginCode, state) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/weixin-mini-app-login`,
+        method: 'POST',
+        data: { phoneCode, loginCode, state },
+        custom: { showSuccess: true, loadingMsg: '登录中', successMsg: '登录成功' },
+      });
+    }
     return request({
       url: '/member/auth/weixin-mini-app-login',
       method: 'POST',

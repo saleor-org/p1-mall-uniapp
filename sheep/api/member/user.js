@@ -72,6 +72,19 @@ const UserApi = {
   },
   // 基于微信小程序的授权码，修改用户手机
   updateUserMobileByWeixin: (code) => {
+    if (isSaleorBff) {
+      return request({
+        url: '/mall/v1/member/user/update-mobile-by-weixin',
+        method: 'PUT',
+        data: { code },
+        custom: {
+          auth: true,
+          showSuccess: true,
+          loadingMsg: '获取中',
+          successMsg: '修改成功',
+        },
+      });
+    }
     return request({
       url: '/member/user/update-mobile-by-weixin',
       method: 'PUT',
