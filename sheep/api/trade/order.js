@@ -23,6 +23,11 @@ function buildSettlementQuery(data) {
     if (data.items[i].cartId) {
       data2[encodeURIComponent(`items[${i}].cartId`)] = `${data.items[i].cartId}`;
     }
+    if (data.items[i].formValues && Object.keys(data.items[i].formValues).length) {
+      data2[encodeURIComponent(`items[${i}].formValues`)] = JSON.stringify(
+        data.items[i].formValues,
+      );
+    }
   }
   if (data.pointStatus !== undefined) {
     data2.pointStatus = data.pointStatus;

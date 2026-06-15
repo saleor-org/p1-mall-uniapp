@@ -114,6 +114,7 @@ export function mapProductDetail(item) {
     description,
     sliderPicUrls,
     skus,
+    formSchema: item.formSchema || [],
   };
 }
 

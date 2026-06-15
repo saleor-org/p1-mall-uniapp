@@ -102,21 +102,24 @@ export default class SheepPay {
         data.channelExtras.openid = openid;
       }
       // 发起预支付 API 调用
-      PayOrderApi.submitOrder(data).then((res) => {
-        // 成功时
-        res.code === 0 && resolve(res);
-        // 失败时
-        if (res.code !== 0 && res.msg.indexOf('无效的openid') >= 0) {
-          // 特殊逻辑：微信公众号、小程序支付时，必须传入 openid 不正确的情况
-          if (
-            res.msg.indexOf('无效的openid') >= 0 || // 获取的 openid 不正确时，或者随便输入了个 openid
-            res.msg.indexOf('下单账号与支付账号不一致') >= 0
-          ) {
-            // https://developers.weixin.qq.com/community/develop/doc/00008c53c347804beec82aed051c00
-            this.bindWeixin();
+      PayOrderApi.submitOrder(data)
+        .then((res) => {
+          if (res.code === 0) {
+            resolve(res);
+            return;
           }
-        }
-      });
+          if (res.msg && res.msg.indexOf('无效的openid') >= 0) {
+            if (
+              res.msg.indexOf('无效的openid') >= 0 ||
+              res.msg.indexOf('下单账号与支付账号不一致') >= 0
+            ) {
+              this.bindWeixin();
+            }
+            return;
+          }
+          reject(res);
+        })
+        .catch(reject);
     });
   }
   // #ifdef H5
@@ -199,27 +202,35 @@ export default class SheepPay {
 
   // 余额支付
   async walletPay() {
-    const { code, data } = await this.prepay('wallet');
-    if (code !== 0) {
-      return;
-    }
-    if (data?.status === 10) {
-      this.payResult('success');
-    } else {
-      sheep.$helper.toast('余额支付未完成，请重试');
+    try {
+      const { code, data } = await this.prepay('wallet');
+      if (code !== 0) {
+        return;
+      }
+      if (data?.status === 10) {
+        this.payResult('success');
+      } else {
+        sheep.$helper.toast('余额支付未完成，请重试');
+      }
+    } catch (err) {
+      sheep.$helper.toast(err?.msg || '余额支付失败');
     }
   }
 
   // 模拟支付
   async mockPay() {
-    const { code, data } = await this.prepay('mock');
-    if (code !== 0) {
-      return;
-    }
-    if (data?.status === 10) {
-      this.payResult('success');
-    } else {
-      sheep.$helper.toast('模拟支付未完成，请重试');
+    try {
+      const { code, data } = await this.prepay('mock');
+      if (code !== 0) {
+        return;
+      }
+      if (data?.status === 10) {
+        this.payResult('success');
+      } else {
+        sheep.$helper.toast('模拟支付未完成，请重试');
+      }
+    } catch (err) {
+      sheep.$helper.toast(err?.msg || '模拟支付失败');
     }
   }
 

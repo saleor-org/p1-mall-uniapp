@@ -76,6 +76,12 @@
               @change="onNumberChange($event)"
             />
           </view>
+          <s-product-form-fields
+            v-if="formFields.length"
+            ref="formFieldsRef"
+            :fields="formFields"
+            v-model="state.formValues"
+          />
         </scroll-view>
       </view>
 
@@ -93,8 +99,9 @@
 </template>
 
 <script setup>
-  import { computed, reactive, watch } from 'vue';
+  import { computed, reactive, ref, watch } from 'vue';
   import sheep from '@/sheep';
+  import SProductFormFields from '@/sheep/components/s-product-form-fields/s-product-form-fields.vue';
   import {
     formatStock,
     convertProductPropertyList,
@@ -114,10 +121,15 @@
     },
   });
 
+  const formFieldsRef = ref(null);
+
   const state = reactive({
     selectedSku: {}, // 选中的 SKU
     currentPropertyArray: {}, // 当前选中的属性，实际是个 Map。key 是 property 编号，value 是 value 编号
+    formValues: {},
   });
+
+  const formFields = computed(() => props.goodsInfo.formSchema || []);
 
   const propertyList = convertProductPropertyList(props.goodsInfo.skus);
   // SKU 列表
@@ -147,6 +159,14 @@
     state.selectedSku.goods_num = e;
   }
 
+  function readFormValues() {
+    const reader = formFieldsRef.value;
+    if (reader?.getValues) {
+      return reader.getValues();
+    }
+    return { ...state.formValues };
+  }
+
   // 加入购物车
   function onAddCart() {
     if (!state.selectedSku.id) {
@@ -157,8 +177,17 @@
       sheep.$helper.toast('库存不足');
       return;
     }
+    const formValues = readFormValues();
+    const formError = formFieldsRef.value?.validate?.(formValues) || '';
+    if (formError) {
+      sheep.$helper.toast(formError);
+      return;
+    }
 
-    emits('addCart', state.selectedSku);
+    emits('addCart', {
+      ...state.selectedSku,
+      formValues,
+    });
   }
 
   // 立即购买
@@ -171,7 +200,17 @@
       sheep.$helper.toast('库存不足');
       return;
     }
-    emits('buy', state.selectedSku);
+    const formValues = readFormValues();
+    const formError = formFieldsRef.value?.validate?.(formValues) || '';
+    if (formError) {
+      sheep.$helper.toast(formError);
+      return;
+    }
+
+    emits('buy', {
+      ...state.selectedSku,
+      formValues,
+    });
   }
 
   // 改变禁用状态：计算每个 property 属性值的按钮，是否禁用

@@ -185,6 +185,17 @@
       return;
     }
     state.payMethods = getPayMethods(data, state.orderType);
+    const balance = Number(sheep.$store('user').userWallet.balance || 0);
+    const price = Number(state.orderInfo.price || 0);
+    const walletMethod = state.payMethods.find((item) => item.value === 'wallet');
+    if (walletMethod && price > 0 && balance < price) {
+      walletMethod.disabled = true;
+    }
+    const mockMethod = state.payMethods.find((item) => item.value === 'mock' && !item.disabled);
+    if (mockMethod) {
+      state.payment = 'mock';
+      return;
+    }
     state.payMethods.find((item) => {
       if (item.value && !item.disabled) {
         state.payment = item.value;

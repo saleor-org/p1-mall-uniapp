@@ -5,7 +5,7 @@
     </view>
     <template v-else-if="state.pageReady">
     <!-- 头部地址选择【配送地址】【自提地址】 -->
-    <AddressSelection v-model="addressState" />
+    <AddressSelection v-if="state.orderInfo.requiresShipping !== false" v-model="addressState" />
 
     <!-- 商品信息 -->
     <view class="order-card-box ss-m-b-14">
@@ -14,7 +14,7 @@
         :key="item.skuId"
         :img="item.picUrl"
         :title="item.spuName"
-        :skuText="item.properties.map((property) => property.valueName).join(' ')"
+        :skuText="formatItemSkuText(item)"
         :price="item.price"
         :num="item.count"
         marginBottom="10"
@@ -261,6 +261,22 @@
     receiverMobile: '', // 收件人手机
   });
 
+  const FORM_LABELS = {
+    mobile: '手机号',
+    qr_content: '扫码内容',
+  };
+
+  function formatItemSkuText(item) {
+    const parts = (item.properties || []).map((property) => property.valueName).filter(Boolean);
+    const formValues = item.formValues || {};
+    Object.entries(formValues).forEach(([key, value]) => {
+      if (value) {
+        parts.push(`${FORM_LABELS[key] || key}: ${value}`);
+      }
+    });
+    return parts.join(' ');
+  }
+
   // ========== 积分 ==========
   /**
    * 使用积分抵扣
@@ -287,7 +303,7 @@
       sheep.$helper.toast('订单信息加载中，请稍候');
       return;
     }
-    if (addressState.value.deliveryType === 1 && !addressState.value.addressInfo.id) {
+    if (state.orderInfo.requiresShipping !== false && addressState.value.deliveryType === 1 && !addressState.value.addressInfo.id) {
       sheep.$helper.toast('请选择收货地址');
       return;
     }

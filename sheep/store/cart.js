@@ -41,10 +41,10 @@ const cart = defineStore('cart', {
 
     // 添加购物车
     async add(goodsInfo) {
-      // 添加购物项
       const { code } = await CartApi.addCart({
         skuId: goodsInfo.id,
         count: goodsInfo.goods_num,
+        formValues: goodsInfo.formValues || undefined,
       });
       // 刷新购物车列表
       if (code === 0) {

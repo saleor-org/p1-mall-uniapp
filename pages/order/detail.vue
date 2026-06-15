@@ -72,7 +72,7 @@
             @tap="onGoodsDetail(item.spuId)"
             :img="item.picUrl"
             :title="item.spuName"
-            :skuText="item.properties.map((property) => property.valueName).join(' ')"
+            :skuText="formatItemSkuText(item)"
             :price="item.price"
             :num="item.count"
           >
@@ -311,6 +311,22 @@
     sheep.$router.go('/pages/pay/index', {
       id: payOrderId,
     });
+  }
+
+  const FORM_LABELS = {
+    mobile: '手机号',
+    qr_content: '扫码内容',
+  };
+
+  function formatItemSkuText(item) {
+    const parts = (item.properties || []).map((property) => property.valueName).filter(Boolean);
+    const formValues = item.formValues || {};
+    Object.entries(formValues).forEach(([key, value]) => {
+      if (value) {
+        parts.push(`${FORM_LABELS[key] || key}: ${value}`);
+      }
+    });
+    return parts.join(' ');
   }
 
   // 查看商品
