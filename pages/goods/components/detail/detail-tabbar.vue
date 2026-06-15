@@ -137,6 +137,7 @@
   const onChat = () => {
     sheep.$router.go('/pages/chat/index', {
       id: props.modelValue.id,
+      productName: props.modelValue.name,
     });
   };
 </script>

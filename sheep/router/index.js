@@ -2,6 +2,10 @@ import $store from '@/sheep/store';
 import { showAuthModal, showShareModal } from '@/sheep/hooks/useModal';
 import { isSaleorBlockedRoute } from '@/sheep/helper/saleor';
 import { syncLoginFromStorage } from '@/sheep/helper/auth';
+import {
+  handleCustomerServiceRoute,
+  isCustomerServiceRoute,
+} from '@/sheep/helper/customer-service';
 import { isNumber, isString, isEmpty, startsWith, isObject, isNil, clone } from 'lodash-es';
 import throttle from '@/sheep/helper/throttle';
 
@@ -47,6 +51,12 @@ const _go = (
     page = path.url;
     if (!isNil(path.params)) {
       query = paramsToQuery(path.params);
+    }
+  }
+
+  if (isCustomerServiceRoute(page)) {
+    if (handleCustomerServiceRoute(queryToParams(query))) {
+      return;
     }
   }
 

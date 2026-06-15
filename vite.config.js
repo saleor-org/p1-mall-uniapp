@@ -62,6 +62,41 @@ export default ({ mode }) => {
 							changeOrigin: true,
 							secure: false,
 						},
+						...(env.SHOPRO_VOCECHAT_PROXY_TARGET
+							? (() => {
+									const voceTarget = env.SHOPRO_VOCECHAT_PROXY_TARGET;
+									return {
+										'/vocechat': {
+											target: voceTarget,
+											changeOrigin: true,
+											secure: false,
+											rewrite: (p) => p.replace(/^\/vocechat/, ''),
+										},
+										// VoceChat API（商城 BFF 走 /mall，不冲突）
+										'/api': {
+											target: voceTarget,
+											changeOrigin: true,
+											secure: false,
+										},
+										// 仅 widget 静态资源；勿代理整个 /static（会打断 uni-app 页面模块）
+										'^/static/js/widget': {
+											target: voceTarget,
+											changeOrigin: true,
+											secure: false,
+										},
+										'^/static/css/widget': {
+											target: voceTarget,
+											changeOrigin: true,
+											secure: false,
+										},
+										'/resource': {
+											target: voceTarget,
+											changeOrigin: true,
+											secure: false,
+										},
+									};
+								})()
+							: {}),
 					}
 				: enableYudaoProxy
 				? {
