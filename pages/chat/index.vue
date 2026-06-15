@@ -41,11 +41,26 @@
                 class="msg-bubble"
                 :class="[
                   item.isMine ? 'msg-bubble--right' : 'msg-bubble--left',
+                  isCardMessage(item) ? 'msg-bubble--card' : '',
                   item.type === 'image' ? 'msg-bubble--image' : '',
                 ]"
               >
+                <view
+                  v-if="item.type === 'product' && item.cardData"
+                  class="msg-card"
+                  @tap="openProduct(item)"
+                >
+                  <GoodsItem :goodsData="item.cardData" />
+                </view>
+                <view
+                  v-else-if="item.type === 'order' && item.cardData"
+                  class="msg-card"
+                  @tap="openOrder(item)"
+                >
+                  <OrderItem :orderData="item.cardData" />
+                </view>
                 <image
-                  v-if="item.type === 'image' && item.imageUrl"
+                  v-else-if="item.type === 'image' && item.imageUrl"
                   class="msg-image"
                   :src="item.imageUrl"
                   mode="widthFix"
@@ -80,6 +95,12 @@
           @send-message="onSendMessage"
         />
       </tools-popup>
+      <SelectPopup
+        :mode="state.selectMode"
+        :show="state.showSelect"
+        @select="onCardSelect"
+        @close="state.showSelect = false"
+      />
     </view>
     <!-- #endif -->
     <!-- #ifndef H5 -->
@@ -99,6 +120,9 @@
   import YudaoChatPanel from '@/pages/chat/components/yudao-chat-panel.vue';
   import MessageInput from '@/pages/chat/components/messageInput.vue';
   import ToolsPopup from '@/pages/chat/components/toolsPopup.vue';
+  import SelectPopup from '@/pages/chat/components/select-popup.vue';
+  import GoodsItem from '@/pages/chat/components/goods.vue';
+  import OrderItem from '@/pages/chat/components/order.vue';
   import {
     getVoceChatWelcomeLines,
     shouldUseVoceChatPage,
@@ -107,8 +131,11 @@
   import {
     ensureVoceChatSession,
     fetchVoceChatHistory,
+    sendVoceChatCard,
     sendVoceChatImage,
     sendVoceChatMessage,
+    startVoceChatPresence,
+    stopVoceChatPresence,
   } from '@/sheep/helper/vocechat-session';
 
   const sys_navBar = sheep.$platform.navbar;
@@ -122,6 +149,8 @@
     sending: false,
     showTools: false,
     toolsMode: '',
+    showSelect: false,
+    selectMode: '',
     messages: [],
     welcomeLines: ['您好，有什么可以帮您？'],
     scrollTop: 0,
@@ -198,8 +227,51 @@
     }, 200);
   }
 
-  function onShowSelect() {
-    sheep.$helper.toast('VoceChat 暂不支持发送商品/订单');
+  function isCardMessage(item) {
+    return item?.type === 'product' || item?.type === 'order';
+  }
+
+  function onShowSelect(mode) {
+    state.showTools = false;
+    state.showSelect = true;
+    state.selectMode = mode;
+  }
+
+  async function onCardSelect({ type, data }) {
+    if (!data || state.sending) {
+      return;
+    }
+    // #ifdef H5
+    state.sending = true;
+    try {
+      await sendVoceChatCard(type, data);
+      handleToolsClose();
+      state.showSelect = false;
+      state.selectMode = '';
+      await refreshMessages();
+    } catch (error) {
+      console.warn('[VoceChat] card send failed', error);
+      sheep.$helper.toast(error?.message || '发送失败，请稍后重试');
+    } finally {
+      state.sending = false;
+    }
+    // #endif
+  }
+
+  function openProduct(item) {
+    const spuId = item?.cardData?.spuId;
+    if (!spuId) {
+      return;
+    }
+    sheep.$router.go('/pages/goods/index', { id: spuId });
+  }
+
+  function openOrder(item) {
+    const orderId = item?.cardData?.id;
+    if (!orderId) {
+      return;
+    }
+    sheep.$router.go('/pages/order/detail', { id: orderId });
   }
 
   async function onImageSelect({ data }) {
@@ -257,6 +329,7 @@
       return;
     }
     await refreshMessages();
+    startVoceChatPresence(() => refreshMessages());
     startPolling();
     // #endif
   }
@@ -270,6 +343,9 @@
 
   onUnload(() => {
     stopPolling();
+    // #ifdef H5
+    stopVoceChatPresence();
+    // #endif
   });
 </script>
 
@@ -374,6 +450,23 @@
         padding: 0;
         background: transparent;
         box-shadow: none;
+      }
+
+      &--card {
+        padding: 0;
+        background: #fff;
+        color: #333;
+        max-width: 85%;
+        overflow: hidden;
+      }
+    }
+
+    .msg-card {
+      width: 100%;
+      max-width: 520rpx;
+
+      :deep(.order-list-card-box) {
+        margin: 0;
       }
     }
 

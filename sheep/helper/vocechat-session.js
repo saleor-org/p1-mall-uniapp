@@ -4,6 +4,12 @@
  */
 import $store from '@/sheep/store';
 import { getWidgetUserId } from '@/sheep/helper/customer-service';
+import {
+  formatOrderSummary,
+  formatProductSummary,
+  normalizeOrderForChat,
+  normalizeProductForChat,
+} from '@/sheep/helper/vocechat-cards';
 
 const WIDGET_USER_PWD = '123123';
 const KEY_LOGIN_USER = 'VOCECHAT_LOGIN_USER';
@@ -153,8 +159,8 @@ export function getVoceChatToken() {
   return localStorage.getItem(KEY_TOKEN) || '';
 }
 
-/** 顾客 → 客服（host）发文本，iframe 通过 SSE 刷新消息列表 */
-export async function sendVoceChatMessage(content) {
+/** 顾客 → 客服（host）发文本 */
+export async function sendVoceChatMessage(content, properties = null) {
   const text = String(content || '').trim();
   if (!text) {
     throw new Error('消息不能为空');
@@ -168,12 +174,17 @@ export async function sendVoceChatMessage(content) {
     throw new Error('VoceChat 未登录');
   }
   const hostId = Number(import.meta.env.SHOPRO_VOCECHAT_HOST_ID || 1);
+  const headers = {
+    'Content-Type': 'text/plain',
+    'X-API-Key': token,
+  };
+  const encodedProps = encodeVoceProperties(properties);
+  if (encodedProps) {
+    headers['X-Properties'] = encodedProps;
+  }
   const res = await fetch(`${getApiBase()}/user/${hostId}/send`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain',
-      'X-API-Key': token,
-    },
+    headers,
     body: text,
   });
   if (!res.ok) {
@@ -181,6 +192,21 @@ export async function sendVoceChatMessage(content) {
     throw new Error(raw || `发送失败 (${res.status})`);
   }
   return res.json();
+}
+
+/** 发送商品/订单卡片（文本摘要 + X-Properties 存结构化数据） */
+export async function sendVoceChatCard(type, rawData) {
+  const mallType = type === 'goods' ? 'product' : type === 'order' ? 'order' : type;
+  if (!['product', 'order'].includes(mallType)) {
+    throw new Error('不支持的消息类型');
+  }
+  const mallData =
+    mallType === 'product'
+      ? normalizeProductForChat(rawData)
+      : normalizeOrderForChat(rawData);
+  const text =
+    mallType === 'product' ? formatProductSummary(mallData) : formatOrderSummary(mallData);
+  return sendVoceChatMessage(text, { mall_type: mallType, mall_data: mallData });
 }
 
 export function getVoceChatSelfUid() {
@@ -342,8 +368,33 @@ export async function fetchVoceChatHistory(limit = 100) {
     .map((row) => {
       const contentType = String(row.detail?.content_type || '');
       const rawContent = row.detail?.content || '';
+      const props = row.detail?.properties || {};
+      const mallType = props.mall_type;
+      const mallData = props.mall_data;
       const isImage = contentType === 'vocechat/file';
       const filePath = isImage ? String(rawContent) : '';
+
+      if (mallType === 'product' && mallData) {
+        return {
+          id: row.mid,
+          type: 'product',
+          cardData: mallData,
+          text: String(rawContent),
+          isMine: Number(row.from_uid) === selfUid,
+          createdAt: row.created_at || 0,
+        };
+      }
+      if (mallType === 'order' && mallData) {
+        return {
+          id: row.mid,
+          type: 'order',
+          cardData: mallData,
+          text: String(rawContent),
+          isMine: Number(row.from_uid) === selfUid,
+          createdAt: row.created_at || 0,
+        };
+      }
+
       return {
         id: row.mid,
         type: isImage ? 'image' : 'text',
@@ -355,4 +406,136 @@ export async function fetchVoceChatHistory(limit = 100) {
       };
     })
     .sort((a, b) => a.createdAt - b.createdAt);
+}
+
+let presenceEs = null;
+let presenceAliveTimer = null;
+let presenceReconnectTimer = null;
+let presenceChatHandler = null;
+
+async function renewVoceChatTokenIfNeeded() {
+  const expire = Number(localStorage.getItem(KEY_EXPIRE) || 0);
+  if (expire > Date.now() + 20_000) {
+    return getVoceChatToken();
+  }
+  const token = getVoceChatToken();
+  const refreshToken = localStorage.getItem(KEY_REFRESH_TOKEN) || '';
+  if (!token || !refreshToken) {
+    return token;
+  }
+  try {
+    const auth = await voceFetch('/token/renew', {
+      method: 'POST',
+      body: JSON.stringify({ token, refresh_token: refreshToken }),
+    });
+    persistVoceChatAuth(auth);
+    return auth.token;
+  } catch (error) {
+    console.warn('[VoceChat] token renew failed', error);
+    return token;
+  }
+}
+
+function resetPresenceAlive(timeout = 20_000) {
+  if (presenceAliveTimer) {
+    clearTimeout(presenceAliveTimer);
+  }
+  presenceAliveTimer = setTimeout(() => {
+    stopVoceChatPresence();
+    startVoceChatPresence(presenceChatHandler);
+  }, timeout);
+}
+
+function isHostDmEvent(data, hostId, selfUid) {
+  const fromUid = Number(data?.from_uid || 0);
+  const targetUid = Number(data?.target?.uid || 0);
+  return (
+    fromUid === hostId ||
+    fromUid === selfUid ||
+    targetUid === hostId ||
+    targetUid === selfUid
+  );
+}
+
+/** 维持 SSE，管理端显示在线绿点；可选 onChat 回调实时刷新消息 */
+export async function startVoceChatPresence(onChat) {
+  if (typeof EventSource === 'undefined') {
+    return;
+  }
+  presenceChatHandler = onChat || null;
+  if (
+    presenceEs &&
+    (presenceEs.readyState === EventSource.OPEN || presenceEs.readyState === EventSource.CONNECTING)
+  ) {
+    return;
+  }
+  stopVoceChatPresence();
+
+  let token = getVoceChatToken();
+  if (!token) {
+    await ensureVoceChatSession();
+    token = await renewVoceChatTokenIfNeeded();
+  } else {
+    token = await renewVoceChatTokenIfNeeded();
+  }
+  if (!token) {
+    return;
+  }
+
+  const params = new URLSearchParams({ limit: '500', 'api-key': token });
+  const es = new EventSource(`${getApiBase()}/user/events?${params.toString()}`);
+  presenceEs = es;
+  const hostId = getVoceChatHostId();
+  const selfUid = getVoceChatSelfUid();
+
+  es.onopen = () => resetPresenceAlive();
+
+  es.onmessage = (evt) => {
+    try {
+      const data = JSON.parse(evt.data);
+      if (data.type === 'heartbeat') {
+        resetPresenceAlive();
+        return;
+      }
+      if (data.type === 'chat' && isHostDmEvent(data, hostId, selfUid) && presenceChatHandler) {
+        presenceChatHandler(data);
+      }
+    } catch (error) {
+      console.warn('[VoceChat] SSE message parse failed', error);
+    }
+  };
+
+  es.onerror = () => {
+    if (presenceEs !== es) {
+      return;
+    }
+    es.close();
+    presenceEs = null;
+    if (presenceAliveTimer) {
+      clearTimeout(presenceAliveTimer);
+      presenceAliveTimer = null;
+    }
+    if (presenceReconnectTimer) {
+      clearTimeout(presenceReconnectTimer);
+    }
+    presenceReconnectTimer = setTimeout(() => {
+      startVoceChatPresence(presenceChatHandler);
+    }, 2000);
+  };
+}
+
+export function stopVoceChatPresence() {
+  if (presenceAliveTimer) {
+    clearTimeout(presenceAliveTimer);
+    presenceAliveTimer = null;
+  }
+  if (presenceReconnectTimer) {
+    clearTimeout(presenceReconnectTimer);
+    presenceReconnectTimer = null;
+  }
+  if (presenceEs) {
+    presenceEs.close();
+    presenceEs = null;
+  }
+  presenceChatHandler = null;
 }
