@@ -79,6 +79,26 @@ const AddressApi = {
       params: { id },
     });
   },
+
+  /** 智能地址识别：粘贴文本 → 姓名/手机/省市区/详细地址 */
+  recognizeAddress: (data) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${prefix}/recognize`,
+        method: 'POST',
+        data,
+        timeout: 15000,
+        custom: { showLoading: false, showError: false },
+      });
+    }
+    return request({
+      url: '/member/address/recognize',
+      method: 'POST',
+      data,
+      timeout: 15000,
+      custom: { showLoading: false, showError: false },
+    });
+  },
 };
 
 export default AddressApi;

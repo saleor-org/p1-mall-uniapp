@@ -12,6 +12,8 @@
       :labelStyle="{ fontWeight: 'bold' }"
     >
       <view class="bg-white form-box ss-p-x-30">
+        <s-address-smart-parse @parsed="onSmartParsed" />
+
         <uni-forms-item name="name" label="收货人" class="form-item">
           <uni-easyinput
             v-model="state.model.name"
@@ -100,6 +102,7 @@
   import { mobile } from '@/sheep/validate/form';
   import AreaApi from '@/sheep/api/system/area';
   import AddressApi from '@/sheep/api/member/address';
+  import SAddressSmartParse from '@/sheep/components/s-address-smart-parse/s-address-smart-parse.vue';
 
   const addressFormRef = ref(null);
   const state = reactive({
@@ -148,6 +151,15 @@
     state.model.areaId = e.district_id;
     state.showRegion = false;
   };
+
+  function onSmartParsed(data) {
+    if (!data || typeof data !== 'object') return;
+    if (data.name) state.model.name = data.name;
+    if (data.mobile) state.model.mobile = data.mobile;
+    if (data.areaName) state.model.areaName = data.areaName;
+    if (data.areaId) state.model.areaId = data.areaId;
+    if (data.detailAddress) state.model.detailAddress = data.detailAddress;
+  }
 
   // 获得地区数据
   const getAreaData = () => {
