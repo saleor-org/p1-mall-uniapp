@@ -124,6 +124,18 @@
       </view>
     </view>
 
+    <view
+      v-for="item in state.orderInfo.items || []"
+      :key="`scan-${item.id}`"
+      v-show="item.postShipScanFields && item.postShipScanFields.length"
+    >
+      <s-order-post-ship-scan
+        :order-id="state.orderInfo.id"
+        :item="item"
+        @submitted="getOrderDetail(state.orderInfo.id)"
+      />
+    </view>
+
     <!--  自提核销  -->
     <PickUpVerify
       :order-info="state.orderInfo"
@@ -286,6 +298,7 @@
   import DeliveryApi from '@/sheep/api/trade/delivery';
   import PayOrderApi from '@/sheep/api/pay/order';
   import PickUpVerify from '@/pages/order/pickUpVerify.vue';
+  import SOrderPostShipScan from '@/sheep/components/s-order-post-ship-scan/s-order-post-ship-scan.vue';
 
   const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
   const headerBg = sheep.$url.css('/static/img/shop/order/order_bg.png');

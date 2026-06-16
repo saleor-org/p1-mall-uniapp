@@ -168,6 +168,15 @@ const OrderApi = {
       data,
     });
   },
+
+  submitOrderLineScan: (data) => {
+    return request({
+      url: `${saleorPrefix}/submit-line-scan`,
+      method: 'POST',
+      data,
+      custom: { auth: true, showLoading: true },
+    });
+  },
 };
 
 export default OrderApi;
