@@ -255,6 +255,46 @@
 						"auth": true,
 						"title": "物流轨迹"
 					}
+				},
+				{
+					"path": "express/send",
+					"style": {
+						"navigationBarTitleText": "寄快递"
+					},
+					"meta": {
+						"auth": true,
+						"title": "寄快递"
+					}
+				},
+				{
+					"path": "product-form/index",
+					"style": {
+						"navigationBarTitleText": "填写信息"
+					},
+					"meta": {
+						"auth": true,
+						"title": "商品表单"
+					}
+				},
+				{
+					"path": "express/send-list",
+					"style": {
+						"navigationBarTitleText": "我的寄件"
+					},
+					"meta": {
+						"auth": true,
+						"title": "我的寄件"
+					}
+				},
+				{
+					"path": "express/send-detail",
+					"style": {
+						"navigationBarTitleText": "寄件详情"
+					},
+					"meta": {
+						"auth": true,
+						"title": "寄件详情"
+					}
 				}
 			]
 		},

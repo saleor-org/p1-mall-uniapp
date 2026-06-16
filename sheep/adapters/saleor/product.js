@@ -115,6 +115,7 @@ export function mapProductDetail(item) {
     sliderPicUrls,
     skus,
     formSchema: item.formSchema || [],
+    formBindData: item.formBindData || {},
   };
 }
 

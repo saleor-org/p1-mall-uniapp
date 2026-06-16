@@ -49,13 +49,37 @@
   const state = reactive({
     list: [], // 地址列表
     loading: true,
-    openType: '', // 页面打开类型
+    openType: '', // 页面打开类型 select | pick
+    pickRole: '',
+    pickFrom: '',
+    pickFieldKey: '',
   });
 
   // 选择收货地址
   const onSelect = (addressInfo) => {
-    if (state.openType !== 'select'){ // 不作为选择组件时阻断操作
-      return
+    if (state.openType === 'pick' && state.pickFrom === 'product-form') {
+      uni.setStorageSync(`form_address_pick_${state.pickFieldKey || 'address'}`, {
+        name: addressInfo.name,
+        mobile: addressInfo.mobile,
+        areaName: addressInfo.areaName,
+        detailAddress: addressInfo.detailAddress,
+      });
+      sheep.$router.back();
+      return;
+    }
+    if (state.openType === 'pick' && state.pickFrom === 'express-send') {
+      uni.setStorageSync('express_pickup_address_pick', {
+        role: state.pickRole || 'send',
+        name: addressInfo.name,
+        mobile: addressInfo.mobile,
+        areaName: addressInfo.areaName,
+        detailAddress: addressInfo.detailAddress,
+      });
+      sheep.$router.back();
+      return;
+    }
+    if (state.openType !== 'select') {
+      return;
     }
     uni.$emit('SELECT_ADDRESS', {
       addressInfo,
@@ -116,6 +140,12 @@
   onLoad((option) => {
     if (option.type) {
       state.openType = option.type;
+    }
+    if (option.mode === 'pick') {
+      state.openType = 'pick';
+      state.pickRole = option.role || 'send';
+      state.pickFrom = option.from || '';
+      state.pickFieldKey = option.fieldKey || '';
     }
   });
 

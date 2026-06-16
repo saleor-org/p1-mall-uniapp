@@ -261,19 +261,22 @@
     receiverMobile: '', // 收件人手机
   });
 
-  const FORM_LABELS = {
-    mobile: '手机号',
-    qr_content: '扫码内容',
-  };
-
   function formatItemSkuText(item) {
     const parts = (item.properties || []).map((property) => property.valueName).filter(Boolean);
-    const formValues = item.formValues || {};
-    Object.entries(formValues).forEach(([key, value]) => {
-      if (value) {
-        parts.push(`${FORM_LABELS[key] || key}: ${value}`);
+    const buyerFields = item.buyerFormFields || [];
+    buyerFields.forEach((field) => {
+      if (field.value) {
+        parts.push(`${field.label}: ${field.value}`);
       }
     });
+    if (!buyerFields.length) {
+      const formValues = item.formValues || {};
+      Object.entries(formValues).forEach(([key, value]) => {
+        if (value) {
+          parts.push(`${key}: ${value}`);
+        }
+      });
+    }
     return parts.join(' ');
   }
 

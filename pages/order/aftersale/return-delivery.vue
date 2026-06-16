@@ -24,6 +24,8 @@
 						<button class='returnBnt bg-color ss-reset-button ui-BG-Main-Gradient sub-btn'
 							form-type="submit"
 							style="background: linear-gradient(90deg,var(--ui-BG-Main),var(--ui-BG-Main-gradient))!important">提交</button>
+            <button type="button" class='returnBnt bg-color ss-reset-button sub-btn pickup-btn'
+              @tap="goExpressPickup">快递100上门取件（商城下单）</button>
 					</view>
 				</view>
 			</form>
@@ -63,6 +65,10 @@
     });
     sheep.$router.go('/pages/order/aftersale/detail', { id: state.id });
 	}
+
+  function goExpressPickup() {
+    sheep.$router.go('/pages/order/express/send');
+  }
 
   // 获得快递物流列表
 	async function getExpressList() {
@@ -192,4 +198,11 @@
 		line-height: 86rpx;
 		margin: 43rpx auto;
 	}
+
+  .pickup-btn {
+    background: #fff !important;
+    color: var(--ui-BG-Main) !important;
+    border: 1px solid var(--ui-BG-Main);
+    margin-top: 0;
+  }
 </style>

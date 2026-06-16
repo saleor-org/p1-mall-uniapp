@@ -1,6 +1,30 @@
 <template>
   <view v-if="fields.length" class="product-form-fields">
     <view class="form-item ss-m-b-24" v-for="field in fields" :key="field.key">
+      <view v-if="field.type === 'group'" class="group-block ss-m-b-12">
+        <text class="group-title">{{ field.label }}</text>
+        <text v-if="groupDescription(field)" class="group-desc">{{ groupDescription(field) }}</text>
+      </view>
+
+      <view
+        v-else-if="field.type === 'divider'"
+        class="divider-block ss-m-b-12"
+        :class="{ dashed: dividerDashed(field) }"
+      >
+        <text v-if="field.label" class="divider-label">{{ field.label }}</text>
+      </view>
+
+      <view v-else-if="field.type === 'action'" class="action-block ss-m-b-12">
+        <SFormFieldAction :field="field" :form-values="localValues" @apply="onFieldApply" />
+      </view>
+      <view v-else-if="field.type === 'fee-breakdown'" class="fee-breakdown-block ss-m-b-12">
+        <SFormFieldFeeBreakdown :field="field" :form-values="localValues" />
+      </view>
+      <view v-else-if="field.type === 'carrier-quote'" class="carrier-quote-block ss-m-b-12">
+        <SFormFieldCarrierQuote :field="field" :form-values="localValues" @apply="onFieldApply" />
+      </view>
+
+      <template v-else-if="field.type !== 'hidden'">
       <view class="label-text ss-m-b-12">
         {{ field.label }}
         <text v-if="field.required" class="required-mark">*</text>
@@ -434,12 +458,58 @@
           @update:modelValue="(val) => onUploadChange(field, val)"
         />
       </view>
+
+      <view v-else-if="field.type === 'address'" class="address-row">
+        <SFormFieldAddress
+          :ref="(el) => setWidgetRef(field.key, el)"
+          :field="field"
+          :modelValue="localValues[field.key]"
+          @update:modelValue="(val) => setFieldValue(field.key, val, field)"
+        />
+      </view>
+
+      <view v-else-if="field.type === 'remote-cascader'" class="remote-cascader-row">
+        <SFormFieldRemoteCascader
+          :ref="(el) => setWidgetRef(field.key, el)"
+          :field="field"
+          :modelValue="localValues[field.key]"
+          @update:modelValue="(val) => setFieldValue(field.key, val, field)"
+          @apply="onFieldApply"
+        />
+      </view>
+
+      <view v-else-if="field.type === 'widget'" class="widget-row">
+        <component
+          :is="resolveWidget(field)"
+          v-if="resolveWidget(field)"
+          :ref="(el) => setWidgetRef(field.key, el)"
+          :field="field"
+          :modelValue="localValues[field.key]"
+          @update:modelValue="(val) => setFieldValue(field.key, val, field)"
+        />
+        <view v-else class="widget-missing">未注册的组件：{{ widgetName(field) }}</view>
+      </view>
+      </template>
     </view>
   </view>
 </template>
 
 <script setup>
   import { reactive, watch } from 'vue';
+  import request from '@/sheep/request';
+  import SFormFieldAddress from '@/sheep/components/s-form-field-address/s-form-field-address.vue';
+  import SFormFieldAction from '@/sheep/components/s-form-field-action/s-form-field-action.vue';
+  import SFormFieldFeeBreakdown from '@/sheep/components/s-form-field-fee-breakdown/s-form-field-fee-breakdown.vue';
+  import SFormFieldCarrierQuote from '@/sheep/components/s-form-field-carrier-quote/s-form-field-carrier-quote.vue';
+  import SFormFieldRemoteCascader from '@/sheep/components/s-form-field-remote-cascader/s-form-field-remote-cascader.vue';
+  import {
+    fieldProps,
+    flattenFormValues,
+    isDisplayOnlyField,
+    parseAddressPayload,
+    resolveWidgetComponent,
+    widgetIdFromField,
+  } from '@/sheep/helper/productFormEngine';
 
   const props = defineProps({
     fields: {
@@ -457,9 +527,99 @@
   const localValues = reactive({});
   const transferChecks = reactive({});
   const transferFilters = reactive({});
+  const widgetRefs = reactive({});
+  const apiOptionsCache = reactive({});
 
-  function fieldProps(field) {
-    return field?.props && typeof field.props === 'object' ? field.props : {};
+  function groupDescription(field) {
+    return String(fieldProps(field).description || '').trim();
+  }
+
+  function dividerDashed(field) {
+    return Boolean(fieldProps(field).dashed);
+  }
+
+  function fieldOptions(field) {
+    const cached = apiOptionsCache[field.key];
+    if (Array.isArray(cached) && cached.length) {
+      return cached;
+    }
+    return field.options || [];
+  }
+
+  function onFieldApply({ key, value }) {
+    if (!key) return;
+    localValues[key] = String(value ?? '');
+    onChange();
+  }
+
+  async function loadApiOptions(field) {
+    if (field?.type !== 'select' && field?.type !== 'radio') return;
+    if (field.optionsSource !== 'api') return;
+    const props = fieldProps(field);
+    const apiPath = String(props.api || props.apiUrl || '').trim();
+    if (!apiPath) return;
+    const labelKey = String(props.labelKey || 'label').trim();
+    const valueKey = String(props.valueKey || 'value').trim();
+    try {
+      const response = await request({
+        url: apiPath,
+        method: 'GET',
+        custom: { showLoading: false, showError: false },
+      });
+      const rows = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.data?.list)
+          ? response.data.list
+          : [];
+      apiOptionsCache[field.key] = rows
+        .map((row) => ({
+          label: String(row?.[labelKey] ?? row?.name ?? row?.label ?? ''),
+          value: String(row?.[valueKey] ?? row?.code ?? row?.value ?? ''),
+        }))
+        .filter((row) => row.label && row.value);
+    } catch (_) {
+      apiOptionsCache[field.key] = [];
+    }
+  }
+
+  async function refreshApiOptions() {
+    const tasks = (props.fields || []).map((field) => loadApiOptions(field));
+    await Promise.all(tasks);
+  }
+
+  function resolveWidget(field) {
+    return resolveWidgetComponent(field);
+  }
+
+  function widgetName(field) {
+    return widgetIdFromField(field) || 'unknown';
+  }
+
+  function setWidgetRef(key, el) {
+    if (el) {
+      widgetRefs[key] = el;
+      return;
+    }
+    delete widgetRefs[key];
+  }
+
+  function parseWidgetPayload(raw) {
+    if (!raw) {
+      return {};
+    }
+    if (typeof raw === 'object' && !Array.isArray(raw)) {
+      return { ...raw };
+    }
+    const text = String(raw).trim();
+    if (!text) {
+      return {};
+    }
+    try {
+      const parsed = JSON.parse(text);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (_) {
+      return {};
+    }
   }
 
   function inputProp(field, key, fallback) {
@@ -521,7 +681,7 @@
   }
 
   function optionLocaldata(field) {
-    return (field.options || []).map((opt) => {
+    return fieldOptions(field).map((opt) => {
       const item = {
         text: opt.label || opt.value,
         value: opt.value,
@@ -557,7 +717,9 @@
           next[field.key] = String(field.min ?? 0);
         } else if (field.type === 'number') {
           next[field.key] = String(field.min ?? 0);
-        } else {
+        } else if (field.type === 'hidden') {
+          next[field.key] = String(fieldProps(field).defaultValue || '');
+        } else if (!isDisplayOnlyField(field)) {
           next[field.key] = '';
         }
       }
@@ -568,7 +730,10 @@
 
   watch(
     () => props.fields,
-    () => syncFromProps(),
+    () => {
+      syncFromProps();
+      refreshApiOptions();
+    },
     { immediate: true, deep: true },
   );
 
@@ -754,7 +919,7 @@
   }
 
   function selectEnabledOptions(field) {
-    return (field.options || []).filter((opt) => !opt.disabled);
+    return fieldOptions(field).filter((opt) => !opt.disabled);
   }
 
   function selectCandidateLabels(field) {
@@ -784,7 +949,7 @@
   }
 
   function selectLabel(field) {
-    const current = (field.options || []).find((opt) => opt.value === localValues[field.key]);
+    const current = fieldOptions(field).find((opt) => opt.value === localValues[field.key]);
     return current ? current.label || current.value : '';
   }
 
@@ -860,7 +1025,7 @@
       }
       return item;
     };
-    return (field.options || []).map(convertNode);
+    return fieldOptions(field).map(convertNode);
   }
 
   function onCascaderChange(field, e) {
@@ -987,13 +1152,13 @@
 
   function transferLeftItems(field) {
     const selected = new Set(transferSelectedValues(field));
-    return (field.options || []).filter((opt) => !selected.has(opt.value));
+    return fieldOptions(field).filter((opt) => !selected.has(opt.value));
   }
 
   function transferRightItems(field) {
     const selected = transferSelectedValues(field);
     const optionMap = Object.fromEntries(
-      (field.options || []).map((opt) => [opt.value, opt]),
+      fieldOptions(field).map((opt) => [opt.value, opt]),
     );
     return selected.map((value) => optionMap[value]).filter(Boolean);
   }
@@ -1451,12 +1616,19 @@
     onChange();
   }
 
-  function getValues() {
+  function getRawValues() {
     const out = {};
     for (const field of props.fields) {
+      if (isDisplayOnlyField(field)) {
+        continue;
+      }
       out[field.key] = String(localValues[field.key] ?? '').trim();
     }
     return out;
+  }
+
+  function getValues() {
+    return flattenFormValues(props.fields, getRawValues());
   }
 
   function onScan(key) {
@@ -1477,8 +1649,54 @@
   }
 
   function validate(values) {
-    const current = values || getValues();
+    const current = values || getRawValues();
     for (const field of props.fields) {
+      if (isDisplayOnlyField(field) || field.type === 'hidden') {
+        continue;
+      }
+      if (field.type === 'widget') {
+        const widgetRef = widgetRefs[field.key];
+        if (widgetRef?.validate) {
+          const err = widgetRef.validate(current);
+          if (err) {
+            return err;
+          }
+        } else if (field.required && !Object.keys(parseWidgetPayload(current[field.key])).length) {
+          return `请填写${field.label}`;
+        }
+        continue;
+      }
+      if (field.type === 'address') {
+        const widgetRef = widgetRefs[field.key];
+        if (widgetRef?.validate) {
+          const err = widgetRef.validate();
+          if (err) return err;
+        } else if (field.required) {
+          const payload = parseAddressPayload(current[field.key]);
+          if (!payload.full && !payload.detail) {
+            return `请填写${field.label}`;
+          }
+        }
+        continue;
+      }
+      if (field.type === 'remote-cascader') {
+        const widgetRef = widgetRefs[field.key];
+        if (widgetRef?.validate) {
+          const err = widgetRef.validate();
+          if (err) return err;
+        } else if (field.required && !String(current[field.key] || '').trim()) {
+          return `请完成${field.label}`;
+        }
+        continue;
+      }
+      if (field.type === 'carrier-quote') {
+        const cqProps = fieldProps(field);
+        const selectionKey = cqProps.selectionKey || 'kuaidicom';
+        if (field.required && !String(current[selectionKey] || '').trim()) {
+          return `请选择${field.label || '快递'}`;
+        }
+        continue;
+      }
       const text = String(current[field.key] || '').trim();
       if (field.required) {
         if (field.type === 'checkbox' || field.type === 'transfer') {
@@ -1521,7 +1739,7 @@
         }
       }
       if (field.type === 'radio' && text) {
-        const disabledOpt = (field.options || []).find(
+        const disabledOpt = fieldOptions(field).find(
           (opt) => opt.value === text && opt.disabled,
         );
         if (disabledOpt) {
@@ -1533,7 +1751,7 @@
         if (allowed.length && !allowed.includes(text)) {
           return `${field.label}选项无效`;
         }
-        const disabledOpt = (field.options || []).find(
+        const disabledOpt = fieldOptions(field).find(
           (opt) => opt.value === text && opt.disabled,
         );
         if (disabledOpt) {
@@ -1551,7 +1769,7 @@
         if (field.required && !values.length) {
           return `请填写${field.label}`;
         }
-        const disabledValues = (field.options || [])
+        const disabledValues = fieldOptions(field)
           .filter((opt) => opt.disabled)
           .map((opt) => opt.value);
         if (values.some((value) => disabledValues.includes(value))) {
@@ -1571,7 +1789,7 @@
         if (field.required && !values.length) {
           return `请填写${field.label}`;
         }
-        const disabledValues = (field.options || [])
+        const disabledValues = fieldOptions(field)
           .filter((opt) => opt.disabled)
           .map((opt) => opt.value);
         if (values.some((value) => disabledValues.includes(value))) {
@@ -1673,6 +1891,34 @@
 </script>
 
 <style lang="scss" scoped>
+  .group-title {
+    display: block;
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #111;
+  }
+
+  .group-desc {
+    display: block;
+    margin-top: 8rpx;
+    font-size: 24rpx;
+    color: #888;
+  }
+
+  .divider-block {
+    border-top: 1rpx solid #e5e7eb;
+    padding-top: 16rpx;
+  }
+
+  .divider-block.dashed {
+    border-top-style: dashed;
+  }
+
+  .divider-label {
+    font-size: 24rpx;
+    color: #999;
+  }
+
   .product-form-fields {
     padding-top: 10rpx;
   }
@@ -2063,5 +2309,11 @@
     background: var(--ui-BG-Main-light);
     color: var(--ui-BG-Main);
     font-size: 24rpx;
+  }
+
+  .widget-missing {
+    font-size: 24rpx;
+    color: #e93323;
+    padding: 8rpx 0;
   }
 </style>

@@ -136,6 +136,30 @@
       />
     </view>
 
+    <view
+      v-for="item in state.orderInfo.items || []"
+      :key="`merchant-${item.id}`"
+      v-show="item.merchantReplyFields && item.merchantReplyFields.length"
+    >
+      <s-order-merchant-reply :item="item" />
+    </view>
+
+    <view
+      v-for="item in state.orderInfo.items || []"
+      :key="`fee-${item.id}`"
+      v-show="feeBreakdownFields(item).length"
+      class="ss-m-x-20 ss-m-b-20"
+    >
+      <SFormFieldFeeBreakdown
+        v-for="field in feeBreakdownFields(item)"
+        :key="`${item.id}-${field.key}`"
+        :field="field"
+        :fee-rows="field.feeRows"
+        :markup-rule-label="field.markupRuleLabel"
+        readonly
+      />
+    </view>
+
     <!--  自提核销  -->
     <PickUpVerify
       :order-info="state.orderInfo"
@@ -299,6 +323,8 @@
   import PayOrderApi from '@/sheep/api/pay/order';
   import PickUpVerify from '@/pages/order/pickUpVerify.vue';
   import SOrderPostShipScan from '@/sheep/components/s-order-post-ship-scan/s-order-post-ship-scan.vue';
+  import SOrderMerchantReply from '@/sheep/components/s-order-merchant-reply/s-order-merchant-reply.vue';
+  import SFormFieldFeeBreakdown from '@/sheep/components/s-form-field-fee-breakdown/s-form-field-fee-breakdown.vue';
 
   const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
   const headerBg = sheep.$url.css('/static/img/shop/order/order_bg.png');
@@ -326,19 +352,29 @@
     });
   }
 
-  const FORM_LABELS = {
-    mobile: '手机号',
-    qr_content: '扫码内容',
-  };
+  function feeBreakdownFields(item) {
+    return (item.buyerFormFields || []).filter((field) => field.type === 'fee-breakdown' && field.feeRows?.length);
+  }
 
   function formatItemSkuText(item) {
     const parts = (item.properties || []).map((property) => property.valueName).filter(Boolean);
-    const formValues = item.formValues || {};
-    Object.entries(formValues).forEach(([key, value]) => {
-      if (value) {
-        parts.push(`${FORM_LABELS[key] || key}: ${value}`);
+    const buyerFields = item.buyerFormFields || [];
+    buyerFields.forEach((field) => {
+      if (field.type === 'fee-breakdown' || field.type === 'carrier-quote') {
+        return;
+      }
+      if (field.value) {
+        parts.push(`${field.label}: ${field.value}`);
       }
     });
+    if (!buyerFields.length) {
+      const formValues = item.formValues || {};
+      Object.entries(formValues).forEach(([key, value]) => {
+        if (value) {
+          parts.push(`${key}: ${value}`);
+        }
+      });
+    }
     return parts.join(' ');
   }
 
