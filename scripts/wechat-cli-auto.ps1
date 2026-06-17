@@ -1,6 +1,6 @@
 param(
   [int]$Port = 43263,
-  [string]$Project = "D:\flynn\saleor-org\mall-uniapp\dist\dev\mp-weixin"
+  [string]$Project = "D:\flynn\saleor-org\p1-mall-uniapp\dist\dev\mp-weixin"
 )
 
 $cli = (Get-ChildItem "C:\Program Files (x86)\Tencent\*\cli.bat" | Select-Object -First 1).FullName

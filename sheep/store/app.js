@@ -232,10 +232,10 @@ const adaptTemplate = async (appTemplate, templateId) => {
       diyTemplate = res.data;
     }
   } catch (error) {
-    console.warn('[mall-uniapp] DIY template API failed, using local mock:', error);
+    console.warn('[p1-mall-uniapp] DIY template API failed, using local mock:', error);
   }
   if (!diyTemplate) {
-    console.warn('[mall-uniapp] Using mock DIY template (demo API unreachable or empty).');
+    console.warn('[p1-mall-uniapp] Using mock DIY template (demo API unreachable or empty).');
     diyTemplate = getMockDiyTemplate();
   }
 

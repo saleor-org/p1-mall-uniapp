@@ -1,4 +1,4 @@
-# mall-uniapp 本地开发速查
+# p1-mall-uniapp 本地开发速查
 
 > Saleor 微信小程序商城前端。UI 来自 [yudao-mall-uniapp](https://github.com/yudaocode/yudao-mall-uniapp)，API 逐步对接到 `p1-wechat-shop`（Saleor BFF）。  
 > 总方案见仓库根目录 [WECHAT-MALL-SCHEME.md](../WECHAT-MALL-SCHEME.md)。
@@ -39,7 +39,7 @@
 ## 常用命令
 
 ```bash
-cd ~/saleor-org/mall-uniapp
+cd ~/saleor-org/p1-mall-uniapp
 
 # 第一次
 npm install --legacy-peer-deps --registry=https://registry.npmmirror.com
@@ -126,7 +126,7 @@ pnpm install && pnpm dev
 ### 4. 启动 H5
 
 ```bash
-cd ~/saleor-org/mall-uniapp
+cd ~/saleor-org/p1-mall-uniapp
 npm run dev:yudao-local
 ```
 
@@ -163,5 +163,5 @@ Saleor 模式下首页会跳转到商品列表（无 DIY 装修）。
 
 ## Git 远程
 
-- `origin` → `saleor-org/mall-uniapp`（你的仓库）
+- `origin` → `saleor-org/p1-mall-uniapp`（你的仓库）
 - `upstream` → `yudaocode/yudao-mall-uniapp`（上游 UI，仅同步参考）

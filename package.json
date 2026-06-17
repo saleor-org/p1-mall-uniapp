@@ -1,7 +1,7 @@
 {
-  "id": "shopro",
-  "name": "shopro",
-  "displayName": "芋道商城",
+  "id": "p1-mall-uniapp",
+  "name": "p1-mall-uniapp",
+  "displayName": "P1 Saleor 商城",
   "version": "2026.04",
   "description": "芋道商城，一套代码，同时发行到iOS、Android、H5、微信小程序多个平台，请使用手机扫码快速体验强大功能",
   "scripts": {
@@ -11,11 +11,11 @@
     "dev:yudao-local": "UNI_INPUT_DIR=. uni --mode yudao-local",
     "dev:mp-weixin": "UNI_INPUT_DIR=. uni -p mp-weixin --mode saleor",
     "build:mp-weixin": "UNI_INPUT_DIR=. uni build -p mp-weixin --mode saleor",
-    "auto:mp-weixin": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\\\\flynn\\\\saleor-org\\\\mall-uniapp\\\\scripts\\\\wechat-cli-auto.ps1",
+    "auto:mp-weixin": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\\\\flynn\\\\saleor-org\\\\p1-mall-uniapp\\\\scripts\\\\wechat-cli-auto.ps1",
     "build:h5": "UNI_INPUT_DIR=. uni build --mode saleor",
     "prettier": "prettier --write  \"{pages,sheep}/**/*.{js,json,tsx,css,less,scss,vue,html,md}\""
   },
-  "repository": "https://github.com/sheepjs/shop.git",
+  "repository": "https://github.com/saleor-org/p1-mall-uniapp.git",
   "keywords": [
     "商城",
     "B2C",
