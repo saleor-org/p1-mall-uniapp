@@ -64,6 +64,7 @@
   import { computed, reactive } from 'vue';
   import { concat } from 'lodash-es';
   import { handleTree } from '@/sheep/helper/utils';
+  import { foodBrandFromCategory, isFoodBrandCategory, openFoodFlow } from '@/sheep/helper/foodFlow';
 
   const state = reactive({
     style: 'second_one', // first_one（一级 - 样式一）, first_two（二级 - 样式二）, second_one（二级）
@@ -95,7 +96,20 @@
 
   // 选中菜单
   const onMenu = (val) => {
+    const category = state.categoryList[val];
+    if (isFoodBrandCategory(category)) {
+      sheep.$store('app').setCategoryActiveId(category.id);
+      openFoodFlow({
+        brand: foodBrandFromCategory(category),
+        mode: 'dinein',
+        title: category.name,
+      });
+      return;
+    }
     state.activeMenu = val;
+    if (category?.id) {
+      sheep.$store('app').setCategoryActiveId(category.id);
+    }
     if (state.style === 'first_one' || state.style === 'first_two') {
       state.pagination.pageNo = 1;
       state.pagination.list = [];
@@ -133,7 +147,7 @@
   function initMenuIndex() {
     const appStore = sheep.$store('app');
     const tabbarParams = appStore.paramsForTabbar || {};
-    const id = tabbarParams.id;
+    const id = tabbarParams.id || appStore.categoryActiveId;
     appStore.clearParamsForTabbar();
     const foundCategory = state.categoryList.find(
       (category) => String(category.id) === String(id),

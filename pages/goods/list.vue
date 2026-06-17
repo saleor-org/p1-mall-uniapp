@@ -119,7 +119,7 @@
 
 <script setup>
   import { reactive, ref } from 'vue';
-  import { onLoad, onReachBottom } from '@dcloudio/uni-app';
+  import { onLoad, onReachBottom, onUnload } from '@dcloudio/uni-app';
   import sheep from '@/sheep';
   import { concat } from 'lodash-es';
   import { resetPagination } from '@/sheep/helper/utils';
@@ -145,6 +145,7 @@
     iconStatus: false, // true - 单列布局；false - 双列布局
     keyword: '',
     categoryId: 0,
+    parentCategoryId: '',
     tabList: [
       {
         name: '综合推荐',
@@ -303,8 +304,15 @@
 
   onLoad((options) => {
     state.categoryId = options.categoryId;
+    state.parentCategoryId = options.parentCategoryId || '';
     state.keyword = options.keyword;
     getList(state.currentSort, state.currentOrder);
+  });
+
+  onUnload(() => {
+    if (state.parentCategoryId) {
+      sheep.$store('app').setParamsForTabbar({ id: state.parentCategoryId });
+    }
   });
 
   // 上拉加载更多

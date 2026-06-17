@@ -20,6 +20,7 @@
         @tap="
           sheep.$router.go('/pages/goods/list', {
             categoryId: item.id,
+            parentCategoryId: currentCategory?.id || '',
           })
         "
       >

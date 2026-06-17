@@ -13,6 +13,7 @@ import { baseUrl, h5Url } from '@/sheep/config';
 const app = defineStore('app', {
   state: () => ({
     paramsForTabbar: {}, // 为全局tabbar跳转传参用。原因是 tabbar 无法传参，只能通过全局状态传递
+    categoryActiveId: '', // 分类 Tab 上次选中的一级分类 id（slug）
     info: {
       // 应用信息
       name: '', // 商城名称
@@ -125,6 +126,9 @@ const app = defineStore('app', {
     },
     clearParamsForTabbar() {
       this.paramsForTabbar = {};
+    },
+    setCategoryActiveId(id = '') {
+      this.categoryActiveId = id ? String(id) : '';
     },
   },
   persist: {
