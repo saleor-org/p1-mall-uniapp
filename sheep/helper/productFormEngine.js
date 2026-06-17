@@ -53,7 +53,6 @@ export function buildFeeBreakdownRows(field, values) {
 const WIDGET_REGISTRY = {
   'express-pickup': SFormWidgetExpressPickup,
   'oauth-movie': SFormWidgetOauthPick,
-  'oauth-food': SFormWidgetOauthPick,
 };
 
 export function fieldProps(field) {

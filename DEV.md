@@ -1,6 +1,6 @@
 # p1-mall-uniapp 本地开发速查
 
-> Saleor 微信小程序商城前端。UI 来自 [yudao-mall-uniapp](https://github.com/yudaocode/yudao-mall-uniapp)，API 逐步对接到 `p1-wechat-shop`（Saleor BFF）。  
+> Saleor 微信小程序商城前端。UI 来自 [yudao-mall-uniapp](https://github.com/yudaocode/yudao-mall-uniapp)，API 逐步对接到 `p1-mall-bff`（Saleor BFF）。  
 > 总方案见仓库根目录 [WECHAT-MALL-SCHEME.md](../WECHAT-MALL-SCHEME.md)。
 
 ## 三种启动模式（必记）
@@ -9,7 +9,7 @@
 |------|------------|------|----------|
 | **`npm run dev:yudao-local`** | **本地 ruoyi-vue-pro** | Vite 代理 → `http://127.0.0.1:48080/app-api` | **推荐摸底**：完整 UI + 本地数据，整理需求后再换 Saleor |
 | **`npm run dev:yudao-full`** | **芋道官方演示 Java API** | 经 Vite 代理 → `api-dashboard.yudao.iocoder.cn` | 演示站（WSL 常超时，仅网络通时用） |
-| **`npm run dev:saleor`** | **p1-wechat-shop BFF → Saleor** | `http://127.0.0.1:8010` | **对接 Saleor** 真实商品/订单（已实现模块才有效） |
+| **`npm run dev:saleor`** | **p1-mall-bff BFF → Saleor** | `http://127.0.0.1:8010` | **对接 Saleor** 真实商品/订单（已实现模块才有效） |
 
 `npm run dev:h5` 与 `dev:saleor` 相同。
 
@@ -24,7 +24,7 @@
 **saleor（你的商城）：**
 
 ```
-浏览器 localhost:3000  →  /mall/v1/*、/wx/v1/*  →  p1-wechat-shop:8010  →  Saleor GraphQL :8000
+浏览器 localhost:3000  →  /mall/v1/*、/wx/v1/*  →  p1-mall-bff:8010  →  Saleor GraphQL :8000
 ```
 
 ## 配置文件
@@ -64,7 +64,7 @@ npm run dev:saleor
 cd ~/saleor-org && ./setup-e2e-db.sh
 
 # 终端 2
-cd ~/saleor-org/p1-wechat-shop && source .venv/bin/activate
+cd ~/saleor-org/p1-mall-bff && source .venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8010
 ```
 

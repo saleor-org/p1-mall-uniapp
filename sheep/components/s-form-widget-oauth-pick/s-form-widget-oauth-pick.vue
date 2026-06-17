@@ -27,9 +27,9 @@
   });
 
   const widgetId = computed(() => widgetIdFromField(props.field));
-  const scene = computed(() => (widgetId.value === 'oauth-food' ? 'food' : 'movie'));
+  const scene = computed(() => 'movie');
 
-  const sceneLabel = computed(() => (scene.value === 'food' ? '点餐选品' : '电影票选品'));
+  const sceneLabel = computed(() => '电影票选品');
 
   const mockButtonLabel = computed(() =>
     state.mockMode ? '一键模拟选品（测试）' : '去选品',

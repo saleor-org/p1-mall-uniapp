@@ -1,4 +1,4 @@
-/** Map p1-wechat-shop /mall/v1 product payloads to yudao SPU shape (prices in fen). */
+/** Map p1-mall-bff /mall/v1 product payloads to yudao SPU shape (prices in fen). */
 
 function moneyToFen(money) {
   if (!money || money.amount == null) {

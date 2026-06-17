@@ -1,4 +1,4 @@
-/** Saleor BFF mode (p1-wechat-shop). Set SHOPRO_SALEOR_BFF=1 in .env */
+/** Saleor BFF mode (p1-mall-bff). Set SHOPRO_SALEOR_BFF=1 in .env */
 export const isSaleorBff = import.meta.env.SHOPRO_SALEOR_BFF === '1';
 
 /** 芋道营销/增值能力 — Saleor 模式暂不开放（不含商城储值钱包） */

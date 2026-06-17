@@ -295,15 +295,6 @@
 						"auth": true,
 						"title": "寄件详情"
 					}
-				},
-				{
-					"path": "food/store-list",
-					"style": {
-						"navigationBarTitleText": "选择门店"
-					},
-					"meta": {
-						"title": "点餐选店"
-					}
 				}
 			]
 		},
