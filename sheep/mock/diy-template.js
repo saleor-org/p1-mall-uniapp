@@ -13,26 +13,26 @@ const tabBar = {
     {
       text: '首页',
       url: '/pages/index/index',
-      iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/tabbar/home.png',
-      activeIconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/tabbar/home-active.png',
+      iconUrl: '',
+      activeIconUrl: '',
     },
     {
       text: '分类',
       url: '/pages/index/category',
-      iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/tabbar/category.png',
-      activeIconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/tabbar/category-active.png',
+      iconUrl: '',
+      activeIconUrl: '',
     },
     {
       text: '购物车',
       url: '/pages/index/cart',
-      iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/tabbar/cart.png',
-      activeIconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/tabbar/cart-active.png',
+      iconUrl: '',
+      activeIconUrl: '',
     },
     {
       text: '我的',
       url: '/pages/index/user',
-      iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/tabbar/user.png',
-      activeIconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/tabbar/user-active.png',
+      iconUrl: '',
+      activeIconUrl: '',
     },
   ],
 };
@@ -51,6 +51,60 @@ const staticBase = 'http://test.yudao.iocoder.cn/static/img/shop';
 const diyBase = 'http://test.yudao.iocoder.cn/static/img/diy';
 
 const menuBadge = { show: false, textColor: '#fff', bgColor: '#FF6000' };
+
+/** 芋道首页 MenuSwiper 金刚区（与演示站分类宫格一致：5 列 × 2 行） */
+function menuSwiperItem(title, iconUrl, url = '/pages/index/category') {
+  return {
+    title,
+    titleColor: '#333',
+    iconUrl,
+    url,
+    badge: menuBadge,
+  };
+}
+
+const homeMenuSwiperList = [
+  menuSwiperItem(
+    '童装童鞋',
+    'http://test.yudao.iocoder.cn/1dc5d968737a990719e95492ebc9e3f8b0308214b503c51887f442f7c7584321.jpg',
+  ),
+  menuSwiperItem(
+    '家用电器',
+    'http://test.yudao.iocoder.cn/d71510c1ca5c5e4c7dd445da9f9357bf169978ed84febeb35ccf6dc0951a18e9.jpg',
+  ),
+  menuSwiperItem(
+    '电子数码',
+    'http://test.yudao.iocoder.cn/7e600e817c8ec0f2f747f41b59e1a3ac28ac850a9b77ed78d69af5fadbef700e.jpg',
+  ),
+  menuSwiperItem(
+    '美妆个护',
+    'http://test.yudao.iocoder.cn/e5ba252dbc6423327fec784f5775f55355f17fd6a2440919a2d91c4e541dfa81.png',
+  ),
+  menuSwiperItem(
+    '母婴用品',
+    'http://test.yudao.iocoder.cn/7d5e76eea5f29773a8962fabb0131d012434ee4cae3ddb416d135e20f89123eb.jpg',
+  ),
+  menuSwiperItem(
+    'T 恤',
+    'http://test.yudao.iocoder.cn/1abe3ad4bcfe1f8e335873dd8718d40bbafc24a3693408966316fc827fefd771.png',
+  ),
+  menuSwiperItem(
+    '裙子',
+    'http://test.yudao.iocoder.cn/8313fe1abaedf15940f77e91d797fe8f24489e13ecfef2214a2474de2a1807e6.png',
+  ),
+  menuSwiperItem(
+    '汉服',
+    'http://test.yudao.iocoder.cn/20251008/blob_1752042302026_1759890648228.jpg',
+  ),
+  menuSwiperItem(
+    '护肤套装',
+    'http://test.yudao.iocoder.cn/a86aad413989d547e91b46b83721ac48a3271edacd05022b11c75ba2a5c0b3a8.png',
+  ),
+  menuSwiperItem(
+    '运动鞋',
+    'http://test.yudao.iocoder.cn/c204a4f7d9ffe946abe9dd9c4014f05f166d8fbb27ac4cdd55de1f7fa0821701.png',
+  ),
+];
 
 /** 芋道个人中心 MenuGrid 菜单项（与默认装修模板一致） */
 function diyMenuItem(title, url, iconFile) {
@@ -88,8 +142,45 @@ export function getMockDiyTemplate() {
   return {
     property: { tabBar },
     home: {
+      page: {
+        description: '',
+        backgroundColor: '#f6f6f6',
+        backgroundImage: '',
+      },
       style: { backgroundColor: '#f6f6f6', marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 0 },
+      navigationBar: {
+        styleType: 'normal',
+        alwaysShow: true,
+        bgType: 'color',
+        bgColor: '#ffffff',
+        otherCells: [],
+      },
       components: [
+        {
+          id: 'Carousel',
+          property: {
+            type: 'default',
+            indicator: 'dot',
+            autoplay: true,
+            interval: 3,
+            height: 174,
+            items: [
+              {
+                type: 'img',
+                imgUrl: 'https://static.iocoder.cn/mall/banner-01.jpg',
+                videoUrl: '',
+                url: '',
+              },
+              {
+                type: 'img',
+                imgUrl: 'https://static.iocoder.cn/mall/banner-02.jpg',
+                videoUrl: '',
+                url: '',
+              },
+            ],
+            style: { bgType: 'color', bgColor: '#fff', marginBottom: 0 },
+          },
+        },
         {
           id: 'SearchBar',
           property: {
@@ -103,31 +194,38 @@ export function getMockDiyTemplate() {
           },
         },
         {
-          id: 'NoticeBar',
+          id: 'MenuSwiper',
           property: {
-            style: { marginBottom: 8 },
-            iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/notice.png',
-            textColor: '#fa8c16',
-            contents: [
-              {
-                text: 'Saleor 商城 — 底部 Tab 可切换首页/分类/购物车/我的。',
-                url: '/pages/goods/list',
-              },
-            ],
+            layout: 'iconText',
+            row: 2,
+            column: 5,
+            list: homeMenuSwiperList,
+            style: {
+              bgType: 'color',
+              bgColor: '#ffffff',
+              marginBottom: 8,
+              marginLeft: 0,
+              marginRight: 0,
+            },
           },
         },
         {
-          id: 'MenuGrid',
+          id: 'NoticeBar',
           property: {
-            style: { marginBottom: 8, marginLeft: 12, marginRight: 12, backgroundColor: '#ffffff', borderRadius: 8 },
-            column: 4,
-            space: 0,
-            border: false,
-            list: [
-              { title: '商品列表', subtitle: '', titleColor: '#333', subtitleColor: '#999', iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/menu/goods.png', url: '/pages/goods/list', badge: { show: false } },
-              { title: '商品分类', subtitle: '', titleColor: '#333', subtitleColor: '#999', iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/menu/category.png', url: '/pages/index/category', badge: { show: false } },
-              { title: '购物车', subtitle: '', titleColor: '#333', subtitleColor: '#999', iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/menu/cart.png', url: '/pages/index/cart', badge: { show: false } },
-              { title: '个人中心', subtitle: '', titleColor: '#333', subtitleColor: '#999', iconUrl: 'http://test.yudao.iocoder.cn/static/img/shop/menu/user.png', url: '/pages/index/user', badge: { show: false } },
+            style: {
+              marginBottom: 8,
+              marginLeft: 0,
+              marginRight: 0,
+              bgType: 'color',
+              bgColor: '#ffffff',
+            },
+            iconUrl: '',
+            textColor: '#fa8c16',
+            contents: [
+              {
+                text: '芋道商城演示 — 新人专享优惠券、限时秒杀，尽在首页。',
+                url: '/pages/goods/list',
+              },
             ],
           },
         },
@@ -135,8 +233,8 @@ export function getMockDiyTemplate() {
           id: 'TitleBar',
           property: {
             style: { marginLeft: 12, marginRight: 12, marginBottom: 8 },
-            title: '推荐商品',
-            subtitle: '来自 Saleor 商品库',
+            title: '热门推荐',
+            subtitle: '精选好物',
             titleColor: '#333333',
             subtitleColor: '#999999',
           },

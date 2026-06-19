@@ -23,10 +23,30 @@
         @click="sheep.$router.go(item.url)"
       >
         <template v-slot:active-icon>
-          <image class="u-page__item__slot-icon" :src="sheep.$url.cdn(item.activeIconUrl)"></image>
+          <image
+            v-if="hasTabIcon(item)"
+            class="u-page__item__slot-icon"
+            :src="tabIconSrc(item, true)"
+          />
+          <uni-icons
+            v-else
+            :type="tabUniIcon(item.url).active"
+            :color="tabbar.style.activeColor"
+            :size="22"
+          />
         </template>
         <template v-slot:inactive-icon>
-          <image class="u-page__item__slot-icon" :src="sheep.$url.cdn(item.iconUrl)"></image>
+          <image
+            v-if="hasTabIcon(item)"
+            class="u-page__item__slot-icon"
+            :src="tabIconSrc(item, false)"
+          />
+          <uni-icons
+            v-else
+            :type="tabUniIcon(item.url).inactive"
+            :color="tabbar.style.color"
+            :size="22"
+          />
         </template>
       </su-tabbar-item>
     </su-tabbar>
@@ -41,6 +61,31 @@
   const tabbar = computed(() => {
     return sheep.$store('app').template.basic?.tabbar;
   });
+
+  const TAB_UNI_ICONS = {
+    '/pages/index/index': { inactive: 'home', active: 'home-filled' },
+    '/pages/index/category': { inactive: 'list', active: 'list' },
+    '/pages/index/cart': { inactive: 'cart', active: 'cart-filled' },
+    '/pages/index/user': { inactive: 'person', active: 'person-filled' },
+  };
+
+  const tabUniIcon = (url = '') => {
+    const path = String(url).split('?')[0];
+    return TAB_UNI_ICONS[path] || { inactive: 'home', active: 'home-filled' };
+  };
+
+  const hasTabIcon = (item) => {
+    const src = item?.iconUrl || '';
+    return src.startsWith('/static/');
+  };
+
+  const tabIconSrc = (item, active) => {
+    const src = active ? item.activeIconUrl : item.iconUrl;
+    if (src?.startsWith('/static/')) {
+      return sheep.$url.static(src);
+    }
+    return sheep.$url.cdn(src);
+  };
 
   const tabbarStyle = computed(() => {
     const backgroundStyle = tabbar.value.style;

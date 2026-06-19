@@ -143,6 +143,12 @@
     width: 750rpx;
     position: relative;
     height: 100%;
+    pointer-events: none;
+
+    .nav-item,
+    .nav-icon {
+      pointer-events: auto;
+    }
 
     .nav-item {
       position: absolute;

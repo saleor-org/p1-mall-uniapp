@@ -1,7 +1,19 @@
 <template>
-  <view>
-    <!-- 基础组件：搜索框 -->
-    <s-search-block v-if="type === 'SearchBar'" :data="data" :styles="styles" :navbar="false" />
+  <view class="s-block-item">
+    <!-- 基础组件：搜索框（芋道：假输入框，点击进搜索页） -->
+    <s-search-block
+      v-if="type === 'SearchBar'"
+      :data="data"
+      :styles="styles"
+      :navbar="true"
+      :placeholder="data.placeholder || '搜索商品'"
+      :placeholder-position="data.placeholderPosition || 'left'"
+      :radius="data.borderRadius || 10"
+      :el-background="data.elBackground || data.backgroundColor || '#ffffff'"
+      :font-color="data.fontColor || '#999999'"
+      :height="data.height || 36"
+      @click="sheep.$router.go('/pages/index/search')"
+    />
     <!-- 基础组件：公告栏 -->
     <s-notice-block v-if="type === 'NoticeBar'" :data="data" />
     <!-- 基础组件：菜单导航 -->
@@ -63,6 +75,8 @@
   /**
    * 装修组件 - 组件集
    */
+  import sheep from '@/sheep';
+
   const props = defineProps({
     type: {
       type: String,
@@ -77,7 +91,10 @@
       default() {},
     },
   });
-  function onSearch() {}
 </script>
 
-<style></style>
+<style lang="scss" scoped>
+  .s-block-item {
+    width: 100%;
+  }
+</style>

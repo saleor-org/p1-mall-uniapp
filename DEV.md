@@ -9,7 +9,7 @@
 |------|------------|------|----------|
 | **`npm run dev:yudao-local`** | **本地 ruoyi-vue-pro** | Vite 代理 → `http://127.0.0.1:48080/app-api` | **推荐摸底**：完整 UI + 本地数据，整理需求后再换 Saleor |
 | **`npm run dev:yudao-full`** | **芋道官方演示 Java API** | 经 Vite 代理 → `api-dashboard.yudao.iocoder.cn` | 演示站（WSL 常超时，仅网络通时用） |
-| **`npm run dev:saleor`** | **p1-mall-bff BFF → Saleor** | `http://127.0.0.1:8010` | **对接 Saleor** 真实商品/订单（已实现模块才有效） |
+| **`npm run dev:saleor`** | **p1-mall-bff BFF → Saleor** | 浏览器 `localhost:3000`（代理 → `8010`） | **对接 Saleor** 真实商品/订单（已实现模块才有效） |
 
 `npm run dev:h5` 与 `dev:saleor` 相同。
 
@@ -63,10 +63,29 @@ npm run dev:saleor
 # 终端 1
 cd ~/saleor-org && ./setup-e2e-db.sh
 
-# 终端 2
-cd ~/saleor-org/p1-mall-bff && source .venv/bin/activate
-uvicorn app.main:app --host 0.0.0.0 --port 8010
+# 终端 2 — BFF（--reload：改 Python 保存后自动生效，无需手动重启）
+cd ~/saleor-org/p1-mall-bff && ./scripts/dev.sh
+
+# 终端 3 — H5（Vite HMR：改 .vue/.js 保存后自动热更新）
+cd ~/saleor-org/p1-mall-uniapp && npm run dev:saleor
+# → http://localhost:3000/
 ```
+
+## 改代码后怎么测（日常）
+
+**保持上面 BFF + H5 两个终端运行**，然后：
+
+| 改了什么 | 你要做什么 |
+|----------|------------|
+| `p1-mall-bff` 的 `.py` | **不用重启**（`--reload` 自动加载）；浏览器 **刷新** `http://localhost:3000` |
+| `p1-mall-uniapp` 的 `.vue/.js` | 多数情况 **自动热更新**；没生效就 **Ctrl+Shift+R** 硬刷新 |
+| 仅改 `.env` | 需 **重启对应进程**（BFF 或 H5） |
+
+自检：浏览器打开 `http://127.0.0.1:8010/health`，应看到 `"hotReload": true`。
+
+H5 请求走同源代理：`localhost:3000/mall/v1/*` → BFF `8010`（无需直连 8010，避免跨域/旧缓存）。
+
+若首页装修/搜索布局异常，控制台执行一次后刷新：`localStorage.removeItem('app-store'); location.reload();`
 
 ## 本地芋道后台（dev:yudao-local 前置）
 

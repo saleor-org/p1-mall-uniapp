@@ -70,7 +70,7 @@ const CartApi = {
       return request({
         url: `${prefix}/list`,
         method: 'GET',
-        custom: { showLoading: false, auth: true },
+        custom: { showLoading: false, showError: false, auth: true },
       });
     }
     return request({

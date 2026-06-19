@@ -6,7 +6,12 @@ const { version } = packageInfo;
 // 开发环境配置
 export let baseUrl;
 if (process.env.NODE_ENV === 'development') {
-  baseUrl = import.meta.env.SHOPRO_DEV_BASE_URL;
+  // Saleor H5 走同源 vite 代理 /mall → BFF，避免跨域或直连错端口
+  if (import.meta.env.SHOPRO_SALEOR_BFF === '1') {
+    baseUrl = '';
+  } else {
+    baseUrl = import.meta.env.SHOPRO_DEV_BASE_URL;
+  }
 } else {
   // 非本地 dev 模式开发环境，判断是体验版还是正式版
   const wxEnvVersion = getWxEnvVersion();

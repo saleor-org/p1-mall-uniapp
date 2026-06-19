@@ -1,7 +1,11 @@
 import DiyApi from '@/sheep/api/promotion/diy';
+import HomeApi from '@/sheep/api/promotion/home';
+import CategoryApi from '@/sheep/api/product/category';
 import { getTenantByWebsite } from '@/sheep/api/infra/tenant';
 import { getTenantId } from '@/sheep/request';
 import { isSaleorBff } from '@/sheep/helper/saleor';
+import { applyHomeMenuCategories } from '@/sheep/helper/home-menu-categories';
+import { applyHomeBanners, applyHomeNotices } from '@/sheep/helper/home-content';
 import { getMockDiyTemplate } from '@/sheep/mock/diy-template';
 import { defineStore } from 'pinia';
 import $platform from '@/sheep/platform';
@@ -69,7 +73,12 @@ const app = defineStore('app', {
       await adaptTenant();
 
       // 加载装修配置
+      const cachedRevision = uni.getStorageSync('diy-template-revision');
       await adaptTemplate(this.template, templateId);
+      if (isSaleorBff && cachedRevision !== DIY_TEMPLATE_REVISION) {
+        // revision 变更时确保首页导航/搜索布局立即生效
+        await adaptTemplate(this.template, templateId);
+      }
 
       // TODO 芋艿：【初始化优化】未来支持管理后台可配；对应 https://api.shopro.sheepjs.com/shop/api/init
       if (true) {
@@ -208,6 +217,38 @@ const adaptTenant = async () => {
   }
 };
 
+/** 装修模板版本：变更后强制重载 mock，避免 pinia 缓存旧首页布局盖住搜索框 */
+const DIY_TEMPLATE_REVISION = 9;
+
+/** Saleor：用后台分类替换首页金刚区静态 mock */
+const hydrateHomeMenuFromSaleor = async (diyTemplate) => {
+  try {
+    const res = await CategoryApi.getCategoryList();
+    if (res?.code !== 0 || !Array.isArray(res.data) || !res.data.length) {
+      return;
+    }
+    const menuComp = diyTemplate?.home?.components?.find((c) => c.id === 'MenuSwiper');
+    const max = (menuComp?.property?.row || 2) * (menuComp?.property?.column || 5);
+    applyHomeMenuCategories(diyTemplate.home, res.data, max);
+  } catch (error) {
+    console.warn('[p1-mall-uniapp] home menu categories failed, using mock:', error);
+  }
+};
+
+/** Saleor：Collection/Page 替换首页轮播与公告 */
+const hydrateHomeContentFromSaleor = async (diyTemplate) => {
+  try {
+    const res = await HomeApi.getHomeContent();
+    if (res?.code !== 0 || !res.data) {
+      return;
+    }
+    applyHomeBanners(diyTemplate.home, res.data.banners);
+    applyHomeNotices(diyTemplate.home, res.data.notices);
+  } catch (error) {
+    console.warn('[p1-mall-uniapp] home content failed, using mock:', error);
+  }
+};
+
 /** 初始化装修模版 */
 const adaptTemplate = async (appTemplate, templateId) => {
   if (isSaleorBff) {
@@ -219,8 +260,11 @@ const adaptTemplate = async (appTemplate, templateId) => {
         appTemplate.basic.theme = tabBar?.theme;
       }
     }
+    await hydrateHomeMenuFromSaleor(diyTemplate);
+    await hydrateHomeContentFromSaleor(diyTemplate);
     appTemplate.home = diyTemplate?.home;
     appTemplate.user = diyTemplate?.user;
+    uni.setStorageSync('diy-template-revision', DIY_TEMPLATE_REVISION);
     return;
   }
   let diyTemplate = null;

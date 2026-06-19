@@ -2,6 +2,7 @@
   <view
     class="search-content ss-flex ss-col-center ss-row-between"
     @tap="click"
+    @click="click"
     :style="[
       {
         borderRadius: radius + 'px',
@@ -10,7 +11,7 @@
         width: width,
       },
     ]"
-    :class="[{ 'border-content': navbar }]"
+    :class="[{ 'border-content': navbar, 'is-fake-search': navbar }]"
   >
     <view
       class="ss-flex ss-col-center"
@@ -62,6 +63,7 @@
         v-for="(item, index) in data.hotKeywords"
         :key="index"
         :style="[{ color: data.textColor, marginRight: '10rpx' }]"
+        @tap.stop="sheep.$router.go('/pages/goods/list', { keyword: item })"
       >
         {{ item }}
       </button>
@@ -283,6 +285,10 @@
     flex: 1;
     // height: 80rpx;
     position: relative;
+
+    &.is-fake-search {
+      cursor: pointer;
+    }
 
     .search-icon {
       font-size: 38rpx;

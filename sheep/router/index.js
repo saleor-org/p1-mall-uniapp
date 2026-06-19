@@ -123,10 +123,16 @@ function paramsToQuery(params) {
   if (isEmpty(params)) {
     return '';
   }
-  // return new URLSearchParams(Object.entries(params)).toString();
   let query = [];
   for (let key in params) {
-    query.push(key + '=' + params[key]);
+    const val = params[key];
+    // H5 navigateTo 会再编码 query，避免中文 keyword 双重编码
+    // #ifdef H5
+    query.push(key + '=' + val);
+    // #endif
+    // #ifndef H5
+    query.push(key + '=' + encodeURIComponent(val));
+    // #endif
   }
 
   return query.join('&');

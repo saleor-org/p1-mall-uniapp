@@ -34,6 +34,8 @@
   const elStyles = computed(() => {
     if (props.styles) {
       return {
+        width: '100%',
+        boxSizing: 'border-box',
         marginTop: `${props.styles.marginTop || 0}px`,
         marginBottom: `${props.styles.marginBottom || 0}px`,
         marginLeft: `${props.styles.marginLeft || 0}px`,
