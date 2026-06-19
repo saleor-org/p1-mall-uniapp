@@ -232,6 +232,7 @@
   import detailActivityTip from './components/detail/detail-activity-tip.vue';
   import { isEmpty } from 'lodash-es';
   import SpuApi from '@/sheep/api/product/spu';
+  import SpuHistoryApi from '@/sheep/api/product/history';
 
   onPageScroll(() => {});
   import OrderApi from '@/sheep/api/trade/order';
@@ -402,6 +403,12 @@
       // 加载到商品
       state.skeletonLoading = false;
       state.goodsInfo = res.data;
+      if (isLogin.value) {
+        SpuHistoryApi.recordBrowseHistory(
+          state.goodsId,
+          res.data.saleorId || res.data.id,
+        );
+      }
       // 获取结算信息
       getSettlementByIds(state.goodsId);
       // 加载是否收藏
