@@ -125,6 +125,25 @@
     </view>
 
     <view
+      class="fulfill-result-box ss-m-x-20 ss-m-b-20"
+      v-if="state.orderInfo.fulfillStatus"
+    >
+      <view class="fulfill-result-title">交付结果</view>
+      <view class="fulfill-result-text" v-if="state.orderInfo.fulfillStatus === 'processing'">
+        {{ fulfillProcessingText(state.orderInfo) }}
+      </view>
+      <view
+        class="fulfill-result-text fulfill-success"
+        v-else-if="state.orderInfo.fulfillStatus === 'success'"
+      >
+        {{ state.orderInfo.fulfillResultText || '交付成功' }}
+      </view>
+      <view class="fulfill-result-text fulfill-fail" v-else-if="state.orderInfo.fulfillStatus === 'failed'">
+        {{ fulfillFailText(state.orderInfo) }}
+      </view>
+    </view>
+
+    <view
       v-for="item in state.orderInfo.items || []"
       :key="`scan-${item.id}`"
       v-show="item.postShipScanFields && item.postShipScanFields.length"
@@ -242,6 +261,13 @@
     <su-fixed bottom placeholder bg="bg-white" v-if="state.orderInfo.buttons?.length">
       <view class="footer-box ss-flex ss-col-center ss-row-right">
         <button
+          class="ss-reset-button cancel-btn buy-again-btn"
+          v-if="state.orderInfo.buttons?.includes('buyAgain')"
+          @tap="onBuyAgain(state.orderInfo)"
+        >
+          再买一单
+        </button>
+        <button
           class="ss-reset-button cancel-btn"
           v-if="state.orderInfo.buttons?.includes('cancel')"
           @tap="onCancel(state.orderInfo.id)"
@@ -308,7 +334,7 @@
 
 <script setup>
   import sheep from '@/sheep';
-  import { onLoad, onShow } from '@dcloudio/uni-app';
+  import { onLoad, onPullDownRefresh, onShow } from '@dcloudio/uni-app';
   import { reactive, ref, watch } from 'vue';
   import { isEmpty } from 'lodash-es';
   import {
@@ -318,6 +344,13 @@
     handleOrderButtons,
   } from '@/sheep/hooks/useGoods';
   import OrderApi from '@/sheep/api/trade/order';
+  import { isSaleorBff } from '@/sheep/helper/saleor';
+  import {
+    fulfillFailText,
+    fulfillProcessingText,
+    hasSupplierOrderAccepted,
+  } from '@/sheep/helper/fulfill-display';
+  import { goBuyAgain } from '@/sheep/helper/buy-again';
   import InvoiceApi from '@/sheep/api/trade/invoice';
   import DeliveryApi from '@/sheep/api/trade/delivery';
   import PayOrderApi from '@/sheep/api/pay/order';
@@ -350,6 +383,10 @@
     sheep.$router.go('/pages/pay/index', {
       id: payOrderId,
     });
+  }
+
+  function onBuyAgain(order) {
+    goBuyAgain(order);
   }
 
   function feeBreakdownFields(item) {
@@ -509,7 +546,7 @@
 
   const pickUpVerifyRef = ref();
 
-  async function getOrderDetail(id) {
+  async function getOrderDetail(id, sync = false) {
     // 对详情数据进行适配
     let res;
     if (state.comeinType === 'wechat') {
@@ -518,7 +555,7 @@
         merchant_trade_no: state.merchantTradeNo,
       });
     } else {
-      res = await OrderApi.getOrderDetail(id);
+      res = await OrderApi.getOrderDetail(id, sync);
     }
     if (res.code === 0) {
       state.orderInfo = res.data;
@@ -540,7 +577,22 @@
     // onShow 中获取订单列表,保证跳转后页面为最新状态
     // 有几率在 onLoad 完成 state.orderInfo.id 赋值前进入 onShow
     if (state.orderInfo.id) {
-      await getOrderDetail(state.orderInfo.id);
+      const needSync =
+        isSaleorBff &&
+        (state.orderInfo.fulfillStatus === 'processing' ||
+          (state.orderInfo.fulfillStatus === 'failed' &&
+            !hasSupplierOrderAccepted(state.orderInfo)));
+      await getOrderDetail(state.orderInfo.id, needSync);
+    }
+  });
+
+  onPullDownRefresh(async () => {
+    try {
+      if (state.orderInfo.id) {
+        await getOrderDetail(state.orderInfo.id, true);
+      }
+    } finally {
+      uni.stopPullDownRefresh();
     }
   });
 
@@ -580,6 +632,34 @@
     border: 2rpx solid #dcdcdc;
     line-height: normal;
     margin-left: 16rpx;
+  }
+
+  .fulfill-result-box {
+    background: #f8fafc;
+    border-radius: 12rpx;
+    padding: 24rpx;
+
+    .fulfill-result-title {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 12rpx;
+    }
+
+    .fulfill-result-text {
+      font-size: 26rpx;
+      color: #475569;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .fulfill-success {
+      color: #15803d;
+    }
+
+    .fulfill-fail {
+      color: #b91c1c;
+    }
   }
 
   .state-box {
@@ -776,6 +856,12 @@
       font-size: 26rpx;
       font-weight: 400;
       color: #333333;
+    }
+
+    .buy-again-btn {
+      background: #fff;
+      color: var(--ui-BG-Main);
+      border: 2rpx solid var(--ui-BG-Main);
     }
 
     .pay-btn {

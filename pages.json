@@ -164,7 +164,8 @@
 			"pages": [{
 					"path": "detail",
 					"style": {
-						"navigationBarTitleText": "订单详情"
+						"navigationBarTitleText": "订单详情",
+						"enablePullDownRefresh": true
 					},
 					"meta": {
 						"auth": true,
@@ -635,7 +636,8 @@
 				{
 					"path": "result",
 					"style": {
-						"navigationBarTitleText": "支付结果"
+						"navigationBarTitleText": "支付结果",
+						"enablePullDownRefresh": true
 					}
 				},
 				{

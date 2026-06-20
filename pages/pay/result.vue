@@ -22,6 +22,22 @@
         <view>￥{{ fen2yuan(state.orderInfo.price) }}</view>
       </view>
 
+      <view
+        class="fulfill-box ss-m-t-30"
+        v-if="payResult === 'success' && state.tradeOrder.fulfillStatus"
+      >
+        <view class="fulfill-title">商品交付</view>
+        <view class="fulfill-text" v-if="fulfillDisplay === 'processing'">
+          {{ fulfillProcessingText(state.tradeOrder) }}
+        </view>
+        <view class="fulfill-text fulfill-success" v-else-if="fulfillDisplay === 'success'">
+          {{ state.tradeOrder.fulfillResultText || '交付成功' }}
+        </view>
+        <view class="fulfill-text fulfill-fail" v-else-if="fulfillDisplay === 'failed'">
+          {{ fulfillFailText(state.tradeOrder) }}
+        </view>
+      </view>
+
       <!-- 操作区 -->
       <view class="btn-box ss-flex ss-row-center ss-m-t-50">
         <button class="back-btn ss-reset-button" @tap="sheep.$router.go('/pages/index/index')">
@@ -63,14 +79,28 @@
 </template>
 
 <script setup>
-  import { onHide, onLoad, onShow } from '@dcloudio/uni-app';
+  import { onHide, onLoad, onPullDownRefresh, onShow, onUnload } from '@dcloudio/uni-app';
   import { computed, reactive, ref } from 'vue';
   import { isEmpty } from 'lodash-es';
   import sheep from '@/sheep';
   import PayOrderApi from '@/sheep/api/pay/order';
   import { fen2yuan } from '@/sheep/hooks/useGoods';
   import OrderApi from '@/sheep/api/trade/order';
+  import { isSaleorBff } from '@/sheep/helper/saleor';
+  import {
+    displayFulfillStatus,
+    fulfillFailText,
+    fulfillProcessingText,
+    shouldPollFulfillStatus,
+  } from '@/sheep/helper/fulfill-display';
   import { WxaSubscribeTemplate } from '@/sheep/helper/const';
+
+  const FULFILL_POLL_MS = 3000;
+  const FULFILL_POLL_MAX = 40;
+
+  const fulfillDisplay = computed(() =>
+    displayFulfillStatus(state.tradeOrder, state.fulfillPollCount, FULFILL_POLL_MAX),
+  );
 
   const state = reactive({
     id: 0, // 支付单号
@@ -79,7 +109,10 @@
     orderInfo: {}, // 支付订单信息
     tradeOrder: {}, // 商品订单信息，只有在 orderType 为 goods 才会请求。目的：【我的拼团】按钮的展示
     counter: 0, // 获取结果次数
+    fulfillPollCount: 0,
   });
+
+  let fulfillPollTimer = null;
 
   // 支付结果 result => payResult
   const payResult = computed(() => {
@@ -97,6 +130,13 @@
     }
   });
 
+  function clearFulfillPoll() {
+    if (fulfillPollTimer) {
+      clearTimeout(fulfillPollTimer);
+      fulfillPollTimer = null;
+    }
+  }
+
   function showRepayModal() {
     if (state.result !== 'failed') return;
     uni.showModal({
@@ -113,6 +153,40 @@
         }
       },
     });
+  }
+
+  async function loadTradeOrder(sync = false) {
+    if (state.orderType !== 'goods' || !state.orderInfo.merchantOrderId) {
+      return;
+    }
+    const { data, code } = await OrderApi.getOrderDetail(state.orderInfo.merchantOrderId, sync);
+    if (code === 0) {
+      state.tradeOrder = data;
+    }
+  }
+
+  function scheduleFulfillPoll() {
+    clearFulfillPoll();
+    if (!isSaleorBff || payResult.value !== 'success') {
+      return;
+    }
+    if (!shouldPollFulfillStatus(state.tradeOrder, state.fulfillPollCount, FULFILL_POLL_MAX)) {
+      return;
+    }
+    fulfillPollTimer = setTimeout(async () => {
+      state.fulfillPollCount += 1;
+      await loadTradeOrder(true);
+      scheduleFulfillPoll();
+    }, FULFILL_POLL_MS);
+  }
+
+  async function refreshAfterPaid() {
+    if (state.orderType !== 'goods') {
+      return;
+    }
+    state.fulfillPollCount = 0;
+    await loadTradeOrder(true);
+    scheduleFulfillPoll();
   }
 
   // 获得订单信息
@@ -142,16 +216,7 @@
         });
 
         // #endif
-        // 特殊：获得商品订单信息
-        if (state.orderType === 'goods') {
-          const { data, code } = await OrderApi.getOrderDetail(
-            state.orderInfo.merchantOrderId,
-            true,
-          );
-          if (code === 0) {
-            state.tradeOrder = data;
-          }
-        }
+        await refreshAfterPaid();
         return;
       }
     }
@@ -234,9 +299,27 @@
     getOrderInfo(state.id);
   });
 
+  onPullDownRefresh(async () => {
+    try {
+      if (state.id) {
+        await getOrderInfo(state.id);
+      }
+      if (state.result === 'paid') {
+        await refreshAfterPaid();
+      }
+    } finally {
+      uni.stopPullDownRefresh();
+    }
+  });
+
   onHide(() => {
     state.result = 'unpaid';
     state.counter = 0;
+    clearFulfillPoll();
+  });
+
+  onUnload(() => {
+    clearFulfillPoll();
   });
 </script>
 
@@ -288,6 +371,35 @@
       font-weight: 500;
       color: #333333;
       font-family: OPPOSANS;
+    }
+
+    .fulfill-box {
+      width: 620rpx;
+      padding: 24rpx 28rpx;
+      background: #f8fafc;
+      border-radius: 16rpx;
+      text-align: center;
+
+      .fulfill-title {
+        font-size: 26rpx;
+        color: #64748b;
+        margin-bottom: 12rpx;
+      }
+
+      .fulfill-text {
+        font-size: 28rpx;
+        color: #334155;
+        line-height: 1.5;
+        word-break: break-all;
+      }
+
+      .fulfill-success {
+        color: #15803d;
+      }
+
+      .fulfill-fail {
+        color: #b91c1c;
+      }
     }
 
     .btn-box {

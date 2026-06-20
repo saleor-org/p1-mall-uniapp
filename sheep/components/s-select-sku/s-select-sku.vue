@@ -349,10 +349,19 @@
   }
 
   changeDisabled(false);
-  // 初始化默认选中规格中的第一个，如果不需要，注释这段代码即可
-  initDefaultSelect(propertyList, onSelectSku);
-  if (propertyList.length === 0 && skuList.value.length === 1) {
-    state.selectedSku = { ...skuList.value[0], goods_num: state.selectedSku.goods_num || 1 };
+  // 单 SKU：无规格维度或仅一个占位规格时，直接选中
+  if (skuList.value.length === 1) {
+    const only = { ...skuList.value[0], goods_num: state.selectedSku.goods_num || 1 };
+    if (propertyList.length === 0) {
+      state.selectedSku = only;
+    } else if (propertyList.length === 1 && (propertyList[0].values || []).length === 1) {
+      const property = propertyList[0];
+      const value = property.values[0];
+      state.currentPropertyArray[property.id] = value.id;
+      state.selectedSku = only;
+    }
+  } else {
+    initDefaultSelect(propertyList, onSelectSku);
   }
 </script>
 

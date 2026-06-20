@@ -46,6 +46,13 @@
         >
           <view class="ss-flex ss-col-center">
             <button
+              v-if="order.buttons.includes('buyAgain')"
+              class="tool-btn ss-reset-button buy-again-btn"
+              @tap.stop="onBuyAgain(order)"
+            >
+              再买一单
+            </button>
+            <button
               v-if="order.buttons.includes('combination')"
               class="tool-btn ss-reset-button"
               @tap.stop="onOrderGroupon(order)"
@@ -145,6 +152,7 @@
   import { concat, isEmpty } from 'lodash-es';
   import OrderApi from '@/sheep/api/trade/order';
   import InvoiceApi from '@/sheep/api/trade/invoice';
+  import { goBuyAgain } from '@/sheep/helper/buy-again';
   import { resetPagination } from '@/sheep/helper/utils';
 
   // 数据
@@ -197,6 +205,10 @@
     sheep.$router.go('/pages/order/detail', {
       id,
     });
+  }
+
+  function onBuyAgain(order) {
+    goBuyAgain(order);
   }
 
   // 跳转拼团记录的详情
@@ -413,6 +425,12 @@
     width: 36rpx;
     height: 36rpx;
     margin: 0 4rpx;
+  }
+
+  .buy-again-btn {
+    color: var(--ui-BG-Main);
+    border: 2rpx solid var(--ui-BG-Main);
+    background: #fff;
   }
 
   .tool-btn {

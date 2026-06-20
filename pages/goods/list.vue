@@ -48,8 +48,13 @@
       </view>
     </su-popup>
 
+    <list-skeleton v-if="state.listLoading" :tip-text="loadingTipText" />
+
     <!-- 情况一：单列布局 -->
-    <view v-if="state.iconStatus && state.pagination.total > 0" class="goods-list ss-m-t-20">
+    <view
+      v-else-if="state.iconStatus && state.pagination.total > 0"
+      class="goods-list ss-m-t-20"
+    >
       <view
         class="ss-p-l-20 ss-p-r-20 ss-m-b-20"
         v-for="item in state.pagination.list"
@@ -67,7 +72,7 @@
     </view>
     <!-- 情况二：双列布局 -->
     <view
-      v-if="!state.iconStatus && state.pagination.total > 0"
+      v-else-if="!state.iconStatus && state.pagination.total > 0"
       class="ss-flex ss-flex-wrap ss-p-x-20 ss-m-t-20 ss-col-top"
     >
       <view class="goods-list-box">
@@ -106,19 +111,23 @@
       </view>
     </view>
     <uni-load-more
-      v-if="state.pagination.total > 0"
+      v-if="!state.listLoading && state.pagination.total > 0"
       :status="state.loadStatus"
       :content-text="{
         contentdown: '上拉加载更多',
       }"
       @tap="loadMore"
     />
-    <s-empty v-if="state.pagination.total === 0" icon="/static/soldout-empty.png" text="暂无商品" />
+    <s-empty
+      v-if="!state.listLoading && state.pagination.total === 0"
+      icon="/static/soldout-empty.png"
+      :text="emptyText"
+    />
   </s-layout>
 </template>
 
 <script setup>
-  import { reactive, ref } from 'vue';
+  import { reactive, computed } from 'vue';
   import { onLoad, onReachBottom, onUnload } from '@dcloudio/uni-app';
   import sheep from '@/sheep';
   import { concat } from 'lodash-es';
@@ -126,6 +135,7 @@
   import SpuApi from '@/sheep/api/product/spu';
   import OrderApi from '@/sheep/api/trade/order';
   import { appendSettlementProduct } from '@/sheep/hooks/useGoods';
+  import listSkeleton from './components/list/list-skeleton.vue';
 
   const sys_navBar = sheep.$platform.navbar;
   const emits = defineEmits(['close', 'change']);
@@ -177,8 +187,25 @@
       },
     ],
     loadStatus: '',
+    listLoading: false,
     leftGoodsList: [], // 双列布局 - 左侧商品
     rightGoodsList: [], // 双列布局 - 右侧商品
+  });
+
+  const loadingTipText = computed(() => {
+    const keyword = String(state.keyword || '').trim();
+    if (keyword) {
+      return `正在搜索「${keyword}」…`;
+    }
+    return '正在加载商品…';
+  });
+
+  const emptyText = computed(() => {
+    const keyword = String(state.keyword || '').trim();
+    if (keyword) {
+      return `未找到「${keyword}」相关商品`;
+    }
+    return '暂无商品';
   });
 
   // 加载瀑布流
@@ -268,29 +295,43 @@
   };
 
   async function getList() {
-    state.loadStatus = 'loading';
-    const { code, data } = await SpuApi.getSpuPage({
-      pageNo: state.pagination.pageNo,
-      pageSize: state.pagination.pageSize,
-      sortField: state.currentSort,
-      sortAsc: state.currentOrder,
-      categoryId: state.categoryId,
-      keyword: state.keyword,
-    });
-    if (code !== 0) {
-      return;
+    const isFirstPage = state.pagination.pageNo === 1;
+    if (isFirstPage) {
+      state.listLoading = true;
     }
-    // 拼接结算信息（营销）
-    await OrderApi.getSettlementProduct(data.list.map((item) => item.id).join(',')).then((res) => {
-      if (res.code !== 0) {
+    state.loadStatus = 'loading';
+    try {
+      const { code, data } = await SpuApi.getSpuPage({
+        pageNo: state.pagination.pageNo,
+        pageSize: state.pagination.pageSize,
+        sortField: state.currentSort,
+        sortAsc: state.currentOrder,
+        categoryId: state.categoryId,
+        keyword: state.keyword,
+      });
+      if (code !== 0) {
         return;
       }
-      appendSettlementProduct(data.list, res.data);
-    });
-    state.pagination.list = concat(state.pagination.list, data.list);
-    state.pagination.total = data.total;
-    state.loadStatus = state.pagination.list.length < state.pagination.total ? 'more' : 'noMore';
-    mountMasonry();
+      // 拼接结算信息（营销）
+      await OrderApi.getSettlementProduct(data.list.map((item) => item.id).join(',')).then((res) => {
+        if (res.code !== 0) {
+          return;
+        }
+        appendSettlementProduct(data.list, res.data);
+      });
+      state.pagination.list = concat(state.pagination.list, data.list);
+      state.pagination.total = data.total;
+      state.loadStatus =
+        state.pagination.list.length < state.pagination.total ? 'more' : 'noMore';
+      mountMasonry();
+    } finally {
+      if (isFirstPage) {
+        state.listLoading = false;
+      }
+      if (state.loadStatus === 'loading') {
+        state.loadStatus = '';
+      }
+    }
   }
 
   // 加载更多
