@@ -172,6 +172,9 @@
       return;
     }
     state.orderInfo = data;
+    if (data.priceChanged) {
+      uni.showToast({ title: '订单价格已更新', icon: 'none' });
+    }
     // 设置支付状态
     checkPayStatus();
     // 获得支付方式

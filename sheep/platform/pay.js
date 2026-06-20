@@ -108,6 +108,15 @@ export default class SheepPay {
             resolve(res);
             return;
           }
+          if (res.code === 40901) {
+            uni.showModal({
+              title: '价格已变动',
+              content: res.msg || '商品价格已变动，请确认后重试',
+              showCancel: false,
+            });
+            reject(res);
+            return;
+          }
           if (res.msg && res.msg.indexOf('无效的openid') >= 0) {
             if (
               res.msg.indexOf('无效的openid') >= 0 ||
