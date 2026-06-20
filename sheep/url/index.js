@@ -1,10 +1,14 @@
 import $store from '@/sheep/store';
-import { staticUrl } from '@/sheep/config';
+import { baseUrl, staticUrl } from '@/sheep/config';
 
 const cdn = (url = '', cdnurl = '') => {
   if (!url) return '';
   if (url.indexOf('http') === 0) {
     return url;
+  }
+  // BFF 本地上传：同源 /mall/v1/files/*
+  if (url.indexOf('/mall/') === 0) {
+    return (baseUrl || '') + url;
   }
   if (cdnurl === '') {
     cdnurl = $store('app').info.cdnurl;

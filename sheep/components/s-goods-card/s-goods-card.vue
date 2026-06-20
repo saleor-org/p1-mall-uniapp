@@ -204,13 +204,20 @@
   // 右列的高度
   let rightHeight = 0;
 
+  function resetMasonry() {
+    count = 0;
+    leftHeight = 0;
+    rightHeight = 0;
+    state.leftGoodsList = [];
+    state.rightGoodsList = [];
+  }
+
   /**
    * 计算商品在左列还是右列
    * @param height 商品的高度
    * @param where 添加到哪一列
    */
   function calculateGoodsColumn(height = 0, where = 'left') {
-    // 处理完
     if (!state.goodsList[count]) return;
     // 增加列的高度
     if (where === 'left') leftHeight += height;
@@ -265,10 +272,11 @@
         appendSettlementProduct(state.goodsList, res.data);
       },
     );
-    // 只有双列布局时需要
+    // 只有双列布局时需要：等子卡片上报高度后再分列，避免首屏宽度为 0
     if (layoutType === LayoutTypeEnum.TWO_COL) {
-      // 分列
-      calculateGoodsColumn();
+      resetMasonry();
+      state.leftGoodsList.push(state.goodsList[0]);
+      count = 1;
     }
   });
 </script>

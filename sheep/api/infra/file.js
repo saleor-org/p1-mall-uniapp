@@ -32,13 +32,14 @@ const FileApi = {
               icon: 'none',
               title: result.msg || '上传失败',
             });
-          } else {
-            return resolve(result);
+            reject(result);
+            return;
           }
+          resolve(result);
         },
         fail: (error) => {
           console.log('上传失败：', error);
-          return resolve(false);
+          reject(error);
         },
         complete: () => {
           uni.hideLoading();

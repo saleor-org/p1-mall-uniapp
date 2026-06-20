@@ -140,19 +140,22 @@
       <view v-if="tagStyle.show" class="tag-icon-box">
         <image class="tag-icon" :src="sheep.$url.cdn(tagStyle.src || tagStyle.imgUrl)" />
       </view>
-      <image
-        v-if="data.image_wh"
-        class="md-img-box"
-        :src="sheep.$url.cdn(data.image || data.picUrl)"
-        mode="widthFix"
-      />
-      <image
-        v-else
-        class="md-img-box"
-        :src="sheep.$url.cdn(data.image || data.picUrl)"
-        :style="[{ height: defaultImgWidth * 2 + 'rpx' }]"
-        mode="aspectFill"
-      />
+      <view v-if="data.image_wh" class="md-img-wrap">
+        <image
+          class="md-img-box"
+          :src="sheep.$url.cdn(data.image || data.picUrl)"
+          mode="widthFix"
+          @load="onMdImageLoad"
+        />
+      </view>
+      <view v-else class="md-img-wrap md-img-wrap--square">
+        <image
+          class="md-img-box"
+          :src="sheep.$url.cdn(data.image || data.picUrl)"
+          mode="aspectFill"
+          @load="onMdImageLoad"
+        />
+      </view>
       <view
         class="md-goods-content ss-flex-col ss-row-around ss-p-b-20 ss-p-t-20 ss-p-x-16"
         :id="elId"
@@ -492,7 +495,7 @@
    * @event {Function()} click                    - 点击卡片
    *
    */
-  import { computed, ref, reactive, getCurrentInstance, nextTick, onMounted } from 'vue';
+  import { computed, getCurrentInstance, nextTick, onMounted, ref } from 'vue';
   import sheep from '@/sheep';
   import {
     fen2yuan,
@@ -505,7 +508,8 @@
   import { PromotionActivityTypeEnum } from '@/sheep/helper/const';
 
   // 数据
-  let defaultImgWidth = ref(0);
+  const heightEmitted = ref(false);
+  let measureRetry = 0;
 
   // 接收参数
   const props = defineProps({
@@ -671,28 +675,41 @@
   const elId = `sheep_${Math.ceil(Math.random() * 10e5).toString(36)}`;
 
   function getGoodsPriceCardWH() {
-    if (props.size === 'md') {
-      const view = uni.createSelectorQuery().in(proxy);
-      view.select(`#${elId}`).fields({
-        size: true,
-        scrollOffset: true,
-      });
-      view.exec((data) => {
-        console.log(data, 'data');
-        let totalHeight = 0;
-        const goodsPriceCard = data[0];
-        defaultImgWidth.value = data[0].width;
-
-        if (props.data.image_wh && Number(props.data.image_wh.w)) {
-          totalHeight =
-            (goodsPriceCard.width / props.data.image_wh.w) * props.data.image_wh.h +
-            goodsPriceCard.height;
-        } else {
-          totalHeight = goodsPriceCard.width + goodsPriceCard.height;
-        }
-        emits('getHeight', totalHeight);
-      });
+    if (props.size !== 'md' || heightEmitted.value) {
+      return;
     }
+    const view = uni.createSelectorQuery().in(proxy);
+    view.select(`#${elId}`).fields({
+      size: true,
+      scrollOffset: true,
+    });
+    view.exec((data) => {
+      const goodsPriceCard = data[0];
+      if (!goodsPriceCard?.width) {
+        if (measureRetry < 8) {
+          measureRetry += 1;
+          setTimeout(() => getGoodsPriceCardWH(), 80);
+        }
+        return;
+      }
+      let totalHeight = 0;
+      if (props.data.image_wh && Number(props.data.image_wh.w)) {
+        totalHeight =
+          (goodsPriceCard.width / props.data.image_wh.w) * props.data.image_wh.h +
+          goodsPriceCard.height;
+      } else {
+        // 方图区域 + 文案区（与 CSS aspect-ratio: 1 一致）
+        totalHeight = goodsPriceCard.width + goodsPriceCard.height;
+      }
+      heightEmitted.value = true;
+      emits('getHeight', totalHeight);
+    });
+  }
+
+  function onMdImageLoad() {
+    nextTick(() => {
+      getGoodsPriceCardWH();
+    });
   }
 
   onMounted(() => {
@@ -850,8 +867,19 @@
     background-color: $white;
     position: relative;
 
+    .md-img-wrap {
+      width: 100%;
+      overflow: hidden;
+
+      &--square {
+        aspect-ratio: 1;
+      }
+    }
+
     .md-img-box {
       width: 100%;
+      height: 100%;
+      display: block;
     }
 
     .md-goods-title {

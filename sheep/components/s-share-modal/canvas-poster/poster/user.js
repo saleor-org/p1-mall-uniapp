@@ -4,7 +4,10 @@ import { measureTextWidth } from '@/utils/textUtils'; // 引入新封装的方�
 const user = async (poster) => {
   const width = poster.width;
   const userInfo = sheep.$store('user').userInfo;
-  const wxa_qrcode = await getWxaQrcode(poster.shareInfo.path, poster.shareInfo.query);
+  let wxa_qrcode = '';
+  // #ifdef MP-WEIXIN
+  wxa_qrcode = await getWxaQrcode(poster.shareInfo.path, poster.shareInfo.query);
+  // #endif
   const widthNickName = measureTextWidth(userInfo.nickname, 14); // 使用新方法
   return [
     {

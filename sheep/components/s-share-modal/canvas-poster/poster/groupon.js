@@ -2,10 +2,12 @@ import sheep from '@/sheep';
 import { formatImageUrlProtocol, getWxaQrcode } from './index';
 
 const groupon = async (poster) => {
-  debugger;
   const width = poster.width;
   const userInfo = sheep.$store('user').userInfo;
-  const wxa_qrcode = await getWxaQrcode(poster.shareInfo.path, poster.shareInfo.query);
+  let wxa_qrcode = '';
+  // #ifdef MP-WEIXIN
+  wxa_qrcode = await getWxaQrcode(poster.shareInfo.path, poster.shareInfo.query);
+  // #endif
   return [
     {
       type: 'image',

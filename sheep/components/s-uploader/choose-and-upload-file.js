@@ -193,6 +193,15 @@ function uploadFilesFromPath(path, directory = '') {
   );
 }
 
+function ensureImageFileName(file) {
+  const name = String(file.name || '');
+  if (/\.(jpe?g|png|gif|webp|bmp)$/i.test(name)) {
+    return;
+  }
+  const ext = String(file.type || '').includes('png') ? '.png' : '.jpg';
+  file.name = `image_${Date.now()}${ext}`;
+}
+
 async function uploadFiles(choosePromise, { onChooseFile, onUploadProgress, directory }) {
   // 获取选择的文件
   const res = await choosePromise;
@@ -251,12 +260,25 @@ async function uploadFiles(choosePromise, { onChooseFile, onUploadProgress, dire
   } else {
     // 后端上传
     for (let file of files) {
-      const { data } = await FileApi.uploadFile(file.path, directory);
-      file.url = data;
+      if (file.fileType === 'image') {
+        ensureImageFileName(file);
+      }
+      const result = await FileApi.uploadFile(file.path, directory);
+      if (!result || isUploadFailed(result)) {
+        throw new Error(result?.msg || '上传失败');
+      }
+      file.url = result.data;
     }
 
     return files;
   }
+}
+
+function isUploadFailed(result) {
+  if (import.meta.env.SHOPRO_SALEOR_BFF === '1') {
+    return result.code !== 0;
+  }
+  return result.error === 1;
 }
 
 function chooseAndUploadFile(

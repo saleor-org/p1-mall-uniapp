@@ -15,7 +15,7 @@
             class="content-img"
             isPreview
             :current="0"
-            :src="state.model?.avatar || sheep.$url.static('/static/img/shop/default_avatar.png')"
+            :src="displayAvatar"
             :height="160"
             :width="160"
             :radius="80"
@@ -212,6 +212,14 @@
 
   const userInfo = computed(() => sheep.$store('user').userInfo);
 
+  const displayAvatar = computed(() => {
+    const url = state.model?.avatar;
+    if (!url) {
+      return sheep.$url.static('/static/img/shop/default_avatar.png');
+    }
+    return sheep.$url.cdn(url);
+  });
+
   // 选择性别
   function onChangeGender(e) {
     state.model.sex = e.detail.value;
@@ -224,20 +232,39 @@
 
   // 选择微信的头像，进行上传
   async function onChooseAvatar(e) {
-    debugger;
     const tempUrl = e.detail.avatarUrl || '';
     if (!tempUrl) return;
-    const files = await uploadFilesFromPath(tempUrl);
-    if (files.length > 0) {
-      state.model.avatar = files[0].url;
+    try {
+      const files = await uploadFilesFromPath(tempUrl);
+      await applyAvatarUpload(files?.[0]?.url);
+    } catch (error) {
+      sheep.$helper.toast('头像上传失败，请重试');
     }
   }
 
   // 手动选择头像，进行上传
   async function onChangeAvatar() {
-    const files = await chooseAndUploadFile({ type: 'image' });
-    if (files.length > 0) {
-      state.model.avatar = files[0].url;
+    try {
+      const files = await chooseAndUploadFile({ type: 'image' });
+      await applyAvatarUpload(files?.[0]?.url);
+    } catch (error) {
+      sheep.$helper.toast('头像上传失败，请重试');
+    }
+  }
+
+  async function applyAvatarUpload(url) {
+    if (!url) {
+      sheep.$helper.toast('头像上传失败，请重试');
+      return;
+    }
+    state.model.avatar = url;
+    const { code } = await UserApi.updateUser({
+      avatar: url,
+      nickname: state.model.nickname,
+      sex: Number(state.model.sex) || 0,
+    });
+    if (code === 0) {
+      await getUserInfo();
     }
   }
 
