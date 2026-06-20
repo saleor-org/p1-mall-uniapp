@@ -7,7 +7,6 @@ const SALEOR_BLOCKED_ROUTE_PREFIXES = [
   '/pages/goods/groupon',
   '/pages/goods/point',
   '/pages/activity/',
-  '/pages/commission',
   '/pages/user/sign',
 ];
 

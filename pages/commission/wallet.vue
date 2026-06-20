@@ -14,7 +14,7 @@
         </view>
         <view class="ss-flex ss-row-between ss-col-center ss-m-t-30">
           <view class="money-num">{{
-            state.showMoney ? fen2yuan(state.summary.withdrawPrice || 0) : '*****'
+            state.showMoney ? fen2yuan(state.summary.brokeragePrice || 0) : '*****'
           }}</view>
           <view class="ss-flex">
             <view class="ss-m-r-20">
