@@ -315,6 +315,13 @@
         </button>
         <button
           class="ss-reset-button cancel-btn"
+          v-if="state.orderInfo.buttons?.includes('commentView')"
+          @tap="onCommentView(state.orderInfo.id)"
+        >
+          查看评价
+        </button>
+        <button
+          class="ss-reset-button cancel-btn"
           v-if="state.orderInfo.buttons?.includes('invoice')"
           @tap="onInvoiceApply(state.orderInfo.id)"
         >
@@ -514,6 +521,12 @@
   // 评价
   function onComment(id) {
     sheep.$router.go('/pages/goods/comment/add', {
+      id,
+    });
+  }
+
+  function onCommentView(id) {
+    sheep.$router.go('/pages/goods/comment/view', {
       id,
     });
   }

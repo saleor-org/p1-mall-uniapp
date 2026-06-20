@@ -3,6 +3,7 @@ Object.defineProperty(exports, '__esModule', {
   value: true,
 });
 const fs = require('fs');
+const path = require('path');
 import stripJsonComments from './strip-json-comments';
 import { isArray, isEmpty } from 'lodash';
 
@@ -97,6 +98,16 @@ function uniReadPagesV3Plugin({ pagesJsonDir, includes }) {
           TABBAR: pages.tabbar,
         },
       };
+    },
+    configureServer(server) {
+      const absPagesJson = path.resolve(pagesJsonDir);
+      server.watcher.add(absPagesJson);
+      server.watcher.on('change', (file) => {
+        if (path.resolve(file) === absPagesJson) {
+          console.log('[uni-read-pages] pages.json changed, restarting dev server...');
+          server.restart();
+        }
+      });
     },
   };
 }

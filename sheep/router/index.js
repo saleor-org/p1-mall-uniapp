@@ -67,9 +67,20 @@ const _go = (
 
   const nextRoute = ROUTES_MAP[page];
 
-  // 未找到指定跳转页面
-  // mark: 跳转404页
+  // pages.json 新增页面后 ROUTES_MAP 可能未热更新，仍尝试 uni 原生跳转
   if (!nextRoute) {
+    if (startsWith(page, '/pages/')) {
+      url = page;
+      if (!isEmpty(query)) {
+        url += `?${query}`;
+      }
+      if (options.redirect) {
+        uni.redirectTo({ url });
+      } else {
+        uni.navigateTo({ url });
+      }
+      return;
+    }
     console.log(`%c跳转路径参数错误<${page || 'EMPTY'}>`, 'color:red;background:yellow');
     return;
   }

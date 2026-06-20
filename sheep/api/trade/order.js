@@ -169,6 +169,18 @@ const OrderApi = {
     });
   },
 
+  getOrderComments: (id) => {
+    if (isSaleorBff) {
+      return request({
+        url: `${saleorPrefix}/get-comments`,
+        method: 'GET',
+        params: { id },
+        custom: { auth: true, showLoading: false },
+      });
+    }
+    return saleorEmpty.list();
+  },
+
   submitOrderLineScan: (data) => {
     return request({
       url: `${saleorPrefix}/submit-line-scan`,

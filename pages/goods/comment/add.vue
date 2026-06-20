@@ -59,10 +59,17 @@
       </view>
     </view>
     <su-fixed bottom placeholder>
-      <view class="foot_box ss-flex ss-row-center ss-col-center">
-        <button class="ss-reset-button post-btn ui-BG-Main-Gradient ui-Shadow-Main" @tap="onSubmit">
-          发布
-        </button>
+      <view class="foot_box">
+        <view class="notice-box">
+          <text class="notice-text">
+            温馨提示：请文明评价。含违法违规、辱骂、广告等不合规内容的评价，平台有权删除。
+          </text>
+        </view>
+        <view class="ss-flex ss-row-center ss-col-center">
+          <button class="ss-reset-button post-btn ui-BG-Main-Gradient ui-Shadow-Main" @tap="onSubmit">
+            发布
+          </button>
+        </view>
       </view>
     </su-fixed>
   </s-layout>
@@ -126,8 +133,13 @@
       sheep.$helper.toast('无待评价订单');
       return;
     }
-    // 处理评论
-    data.items.forEach((item) => {
+    const pendingItems = (data.items || []).filter((item) => !item.commentStatus);
+    if (!pendingItems.length) {
+      sheep.$helper.toast('订单已评价');
+      sheep.$router.redirect('/pages/goods/comment/view', { id: state.id });
+      return;
+    }
+    pendingItems.forEach((item) => {
       state.commentList.push({
         anonymous: false,
         orderId: state.id,
@@ -138,7 +150,7 @@
         picUrls: [],
       });
     });
-    state.orderInfo = data;
+    state.orderInfo = { ...data, items: pendingItems };
   });
 </script>
 
@@ -187,5 +199,19 @@
     border-radius: 40rpx;
     color: rgba(#fff, 0.9);
     margin-bottom: 20rpx;
+  }
+
+  .notice-box {
+    width: 690rpx;
+    margin: 0 auto 16rpx;
+    padding: 16rpx 20rpx;
+    background: #fff8e6;
+    border-radius: 12rpx;
+  }
+
+  .notice-text {
+    font-size: 24rpx;
+    line-height: 1.6;
+    color: #996600;
   }
 </style>

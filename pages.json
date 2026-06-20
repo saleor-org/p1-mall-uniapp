@@ -152,6 +152,15 @@
 					}
 				},
 				{
+					"path": "comment/view",
+					"style": {
+						"navigationBarTitleText": "我的评价"
+					},
+					"meta": {
+						"auth": true
+					}
+				},
+				{
 					"path": "comment/list",
 					"style": {
 						"navigationBarTitleText": "商品评价"
