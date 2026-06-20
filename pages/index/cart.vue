@@ -1,13 +1,19 @@
 <template>
   <s-layout :bgStyle="{ color: '#fff' }" tabbar="/pages/index/cart" title="购物车">
+    <s-page-loading
+      v-if="state.listLoading"
+      type="cart"
+      :tip="loadingTip"
+      :row-count="3"
+    />
     <s-empty
-      v-if="state.list.length === 0"
+      v-else-if="state.list.length === 0"
       icon="/static/cart-empty.png"
       text="购物车空空如也,快去逛逛吧~"
     />
 
     <!-- 头部 -->
-    <view v-if="state.list.length" class="cart-box ss-flex ss-flex-col ss-row-between">
+    <view v-else class="cart-box ss-flex ss-flex-col ss-row-between">
       <view class="cart-header ss-flex ss-col-center ss-row-between ss-p-x-30">
         <view class="header-left ss-flex ss-col-center ss-font-26">
           共
@@ -105,7 +111,7 @@
 
 <script setup>
   import sheep from '@/sheep';
-  import { onShow } from '@dcloudio/uni-app';
+  import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
   import SpuApi from '@/sheep/api/product/spu';
   import { computed, reactive } from 'vue';
   import { fen2yuan } from '@/sheep/hooks/useGoods';
@@ -134,10 +140,18 @@
   const state = reactive({
     editMode: computed(() => cart.editMode),
     list: computed(() => cart.list),
+    listLoading: computed(() => cart.listLoading),
     selectedList: [],
     selectedIds: computed(() => cart.selectedIds),
     isAllSelected: computed(() => cart.isAllSelected),
     totalPriceSelected: computed(() => cart.totalPriceSelected),
+  });
+
+  const loadingTip = computed(() => {
+    if (state.list.length > 0) {
+      return '正在更新购物车…';
+    }
+    return '正在加载购物车…';
   });
 
   // 单选选中
@@ -252,12 +266,20 @@
     cart.delete(state.selectedIds);
   }
 
-  function getCartList() {
-    cart.getList();
+  async function getCartList(options = {}) {
+    await cart.getList(options);
   }
 
   onShow(() => {
     getCartList();
+  });
+
+  onPullDownRefresh(async () => {
+    try {
+      await getCartList({ skeleton: true });
+    } finally {
+      uni.stopPullDownRefresh();
+    }
   });
 </script>
 

@@ -52,82 +52,105 @@ const app = defineStore('app', {
         data: [],
       },
     },
+    homeLoading: false,
+    userLoading: false,
     shareInfo: {}, // 全局分享信息
     has_wechat_trade_managed: 0, // 小程序发货信息管理  0 没有 || 1 有
   }),
   actions: {
     // 获取Shopro应用配置和模板
     async init(templateId = null) {
-      // 检查网络
-      const networkStatus = await $platform.checkNetwork();
-      if (!networkStatus) {
-        $router.error('NetworkError');
-      }
-
-      // 检查配置
-      if (typeof baseUrl === 'undefined') {
-        $router.error('EnvError');
-      }
-
-      // 加载租户
-      await adaptTenant();
-
-      // 加载装修配置
-      const cachedRevision = uni.getStorageSync('diy-template-revision');
-      await adaptTemplate(this.template, templateId);
-      if (isSaleorBff && cachedRevision !== DIY_TEMPLATE_REVISION) {
-        // revision 变更时确保首页导航/搜索布局立即生效
-        await adaptTemplate(this.template, templateId);
-      }
-
-      // TODO 芋艿：【初始化优化】未来支持管理后台可配；对应 https://api.shopro.sheepjs.com/shop/api/init
-      if (true) {
-        this.info = {
-          name: '芋道商城',
-          logo: 'https://static.iocoder.cn/ruoyi-vue-pro-logo.png',
-          version: '2026.04',
-          copyright: '全部开源，个人与企业可 100% 免费使用',
-          copytime: 'Copyright© 2018-2025',
-
-          cdnurl: 'https://file.sheepjs.com', // 云存储域名
-          filesystem: 'qcloud', // 云存储平台
-        };
-        this.platform = {
-          share: {
-            methods: ['forward', 'poster', 'link'],
-            linkAddress: h5Url,
-            posterInfo: {
-              user_bg: '/static/img/shop/config/user-poster-bg.png',
-              goods_bg: '/static/img/shop/config/goods-poster-bg.png',
-              groupon_bg: '/static/img/shop/config/groupon-poster-bg.png',
-            },
-            forwardInfo: {
-              title: '',
-              image: '',
-              desc: '',
-            },
-          },
-          bind_mobile: 0,
-        };
-        this.has_wechat_trade_managed = 0;
-
-        // 加载主题
-        const sysStore = sys();
-        sysStore.setTheme();
-
-        // 模拟用户登录
-        const userStore = user();
-        if (userStore.isLogin) {
-          userStore.loginAfter();
+      this.homeLoading = true;
+      this.userLoading = true;
+      try {
+        // 检查网络
+        const networkStatus = await $platform.checkNetwork();
+        if (!networkStatus) {
+          $router.error('NetworkError');
         }
-        return Promise.resolve(true);
-      } else {
-        $router.error('InitError', res.msg || '加载失败');
+
+        // 检查配置
+        if (typeof baseUrl === 'undefined') {
+          $router.error('EnvError');
+        }
+
+        // 加载租户
+        await adaptTenant();
+
+        // 加载装修配置
+        const cachedRevision = uni.getStorageSync('diy-template-revision');
+        await adaptTemplate(this.template, templateId);
+        if (isSaleorBff && cachedRevision !== DIY_TEMPLATE_REVISION) {
+          // revision 变更时确保首页导航/搜索布局立即生效
+          await adaptTemplate(this.template, templateId);
+        }
+
+        // TODO 芋艿：【初始化优化】未来支持管理后台可配；对应 https://api.shopro.sheepjs.com/shop/api/init
+        if (true) {
+          this.info = {
+            name: '芋道商城',
+            logo: 'https://static.iocoder.cn/ruoyi-vue-pro-logo.png',
+            version: '2026.04',
+            copyright: '全部开源，个人与企业可 100% 免费使用',
+            copytime: 'Copyright© 2018-2025',
+
+            cdnurl: 'https://file.sheepjs.com', // 云存储域名
+            filesystem: 'qcloud', // 云存储平台
+          };
+          this.platform = {
+            share: {
+              methods: ['forward', 'poster', 'link'],
+              linkAddress: h5Url,
+              posterInfo: {
+                user_bg: '/static/img/shop/config/user-poster-bg.png',
+                goods_bg: '/static/img/shop/config/goods-poster-bg.png',
+                groupon_bg: '/static/img/shop/config/groupon-poster-bg.png',
+              },
+              forwardInfo: {
+                title: '',
+                image: '',
+                desc: '',
+              },
+            },
+            bind_mobile: 0,
+          };
+          this.has_wechat_trade_managed = 0;
+
+          // 加载主题
+          const sysStore = sys();
+          sysStore.setTheme();
+
+          // 模拟用户登录
+          const userStore = user();
+          if (userStore.isLogin) {
+            userStore.loginAfter();
+          }
+          return Promise.resolve(true);
+        } else {
+          $router.error('InitError', res.msg || '加载失败');
+        }
+      } finally {
+        this.homeLoading = false;
+        this.userLoading = false;
       }
     },
     /** 首页下拉刷新：只重载装修模板，避免重复走租户/登录链路 */
     async refreshHome() {
-      await adaptTemplate(this.template, null);
+      this.homeLoading = true;
+      try {
+        await adaptTemplate(this.template, null);
+      } finally {
+        this.homeLoading = false;
+      }
+    },
+    /** 个人中心下拉刷新：重载 user 装修模板 */
+    async refreshUser() {
+      this.userLoading = true;
+      try {
+        await adaptTemplate(this.template, null);
+      } finally {
+        this.userLoading = false;
+      }
     },
     // 设置 paramsForTabbar
     setParamsForTabbar(params = {}) {

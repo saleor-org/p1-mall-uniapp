@@ -1,6 +1,9 @@
 <!-- 首页，支持店铺装修 -->
 <template>
-  <view v-if="template">
+  <view v-if="showHomeLoading" class="home-loading-wrap">
+    <s-page-loading type="home" :tip="homeLoadingTip" />
+  </view>
+  <view v-else-if="template">
     <s-layout
       title="首页"
       navbar="custom"
@@ -30,7 +33,17 @@
     fail: () => {},
   });
 
-  const template = computed(() => sheep.$store('app').template?.home);
+  const appStore = computed(() => sheep.$store('app'));
+  const homeLoading = computed(() => appStore.value.homeLoading);
+  const template = computed(() => appStore.value.template?.home);
+  const hasHomeContent = computed(() => (template.value?.components?.length || 0) > 0);
+  const showHomeLoading = computed(() => homeLoading.value || !hasHomeContent.value);
+  const homeLoadingTip = computed(() => {
+    if (homeLoading.value && hasHomeContent.value) {
+      return '正在更新首页…';
+    }
+    return '正在装扮首页，马上就好…';
+  });
   // 在此处拦截改变一下首页轮播图 此处先写死后期复活 放到启动函数里
   // (async function() {
   // console.log('原代码首页定制化数据',template)

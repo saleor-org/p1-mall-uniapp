@@ -21,10 +21,10 @@ const options = {
   showError: true,
   // 失败提醒 默认使用后端返回信息
   errorMsg: '',
-  // 显示请求时loading模态框 默认显示
-  showLoading: true,
+  // 显示请求时loading模态框 默认关闭，由各页 s-page-loading / 骨架屏承接
+  showLoading: false,
   // loading提醒文字
-  loadingMsg: '加载中',
+  loadingMsg: '请稍候…',
   // 需要授权才能请求 默认放开
   auth: false,
   // 是否传递 token

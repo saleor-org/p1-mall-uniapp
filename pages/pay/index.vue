@@ -1,7 +1,13 @@
 <!-- 收银台 -->
 <template>
   <s-layout title="收银台">
-    <view class="bg-white ss-modal-box ss-flex-col">
+    <s-page-loading
+      v-if="state.pageLoading"
+      type="pay"
+      tip="正在核对订单金额与支付方式"
+    />
+
+    <view v-else class="pay-page bg-white ss-modal-box ss-flex-col">
       <!-- 订单信息 -->
       <view class="modal-header ss-flex-col ss-col-center ss-row-center">
         <view class="money-box ss-m-b-20">
@@ -55,20 +61,19 @@
 
       <!-- 工具 -->
       <view class="modal-footer ss-flex ss-row-center ss-col-center ss-m-t-80 ss-m-b-40">
-        <button v-if="state.payStatus === 0" class="ss-reset-button past-due-btn">
-          检测支付环境中
-        </button>
-        <button v-else-if="state.payStatus === -1" class="ss-reset-button past-due-btn" disabled>
+        <button v-if="state.payStatus === -1" class="ss-reset-button past-due-btn" disabled>
           支付已过期
         </button>
         <button
-          v-else
+          v-else-if="state.payStatus === 1"
           class="ss-reset-button save-btn"
           @tap="onPay"
-          :disabled="state.payStatus !== 1"
           :class="{ 'disabled-btn': state.payStatus !== 1 }"
         >
           立即支付
+        </button>
+        <button v-else class="ss-reset-button past-due-btn" disabled>
+          {{ state.payStatus === -2 ? '支付单无效' : '暂不可支付' }}
         </button>
       </view>
     </view>
@@ -86,13 +91,13 @@
 
   const userWallet = computed(() => sheep.$store('user').userWallet);
 
-  // 检测支付环境
   const state = reactive({
-    orderType: 'goods', // 订单类型; goods - 商品订单, recharge - 充值订单
-    orderInfo: {}, // 支付单信息
-    payStatus: 0, // 0=检测支付环境, -2=未查询到支付单信息， -1=支付已过期， 1=待支付，2=订单已支付
-    payMethods: [], // 可选的支付方式
-    payment: '', // 选中的支付方式
+    orderType: 'goods',
+    orderInfo: {},
+    payStatus: 0,
+    payMethods: [],
+    payment: '',
+    pageLoading: true,
   });
 
   const onPay = () => {
@@ -115,7 +120,6 @@
     }
   };
 
-  // 支付文案提示
   const payDescText = computed(() => {
     if (state.payStatus === 2) {
       return '该订单已支付';
@@ -126,7 +130,7 @@
         state.payStatus = -1;
         return '';
       }
-      return `剩余支付时间 ${time.h}:${time.m}:${time.s} `;
+      return `剩余支付时间 ${time.h}:${time.m}:${time.s}`;
     }
     if (state.payStatus === -2) {
       return '未查询到支付单信息';
@@ -134,12 +138,9 @@
     return '';
   });
 
-  // 状态转换：payOrder.status => payStatus
   function checkPayStatus() {
     if (state.orderInfo.status === 10 || state.orderInfo.status === 20) {
-      // 支付成功
       state.payStatus = 2;
-      // 跳转回支付成功页
       uni.showModal({
         title: '提示',
         content: '订单已支付',
@@ -151,37 +152,35 @@
       return;
     }
     if (state.orderInfo.status === 30) {
-      // 支付关闭
       state.payStatus = -1;
       return;
     }
-    state.payStatus = 1; // 待支付
+    state.payStatus = 1;
   }
 
-  // 切换支付方式
   function onTapPay(e) {
     state.payment = e.detail.value;
   }
 
-  // 设置支付订单信息
   async function setOrder(id) {
-    // 获得支付订单信息
-    const { data, code } = await PayOrderApi.getOrder(id, true);
-    if (code !== 0 || !data) {
-      state.payStatus = -2;
-      return;
+    state.pageLoading = true;
+    try {
+      const { data, code } = await PayOrderApi.getOrder(id, true);
+      if (code !== 0 || !data) {
+        state.payStatus = -2;
+        return;
+      }
+      state.orderInfo = data;
+      if (data.priceChanged) {
+        uni.showToast({ title: '订单价格已更新', icon: 'none' });
+      }
+      checkPayStatus();
+      await setPayMethods();
+    } finally {
+      state.pageLoading = false;
     }
-    state.orderInfo = data;
-    if (data.priceChanged) {
-      uni.showToast({ title: '订单价格已更新', icon: 'none' });
-    }
-    // 设置支付状态
-    checkPayStatus();
-    // 获得支付方式
-    await setPayMethods();
   }
 
-  // 获得支付方式
   async function setPayMethods() {
     const { data, code } = await PayChannelApi.getEnableChannelCodeList(state.orderInfo.appId);
     if (code !== 0) {
@@ -209,6 +208,7 @@
 
   onLoad((options) => {
     if (!requirePageAuth()) {
+      state.pageLoading = false;
       return;
     }
     if (
@@ -219,18 +219,21 @@
       location.reload();
       return;
     }
-    // 获得支付订单信息
     let id = options.id;
     if (options.orderType) {
       state.orderType = options.orderType;
     }
     setOrder(id);
-    // 刷新钱包的缓存
     sheep.$store('user').getWallet();
   });
 </script>
 
 <style lang="scss" scoped>
+  .pay-page {
+    min-height: 100vh;
+    background: #f6f7f9;
+  }
+
   .pay-icon {
     width: 36rpx;
     height: 36rpx;
@@ -238,8 +241,6 @@
   }
 
   .ss-modal-box {
-    // max-height: 1000rpx;
-
     .modal-header {
       position: relative;
       padding: 60rpx 20rpx 40rpx;

@@ -1,7 +1,8 @@
 <!-- 商品分类列表 -->
 <template>
   <s-layout :bgStyle="{ color: '#fff' }" tabbar="/pages/index/category" title="分类">
-    <view class="s-category">
+    <s-page-loading v-if="state.pageLoading" type="inline" tip="正在加载分类…" />
+    <view v-else class="s-category">
       <view class="three-level-wrap ss-flex ss-col-top">
         <!-- 商品分类（左） -->
         <view class="side-menu-wrap" :style="[{ top: Number(statusBarHeight + 88) + 'rpx' }]">
@@ -78,6 +79,7 @@
       pageSize: 6,
     },
     loadStatus: '',
+    pageLoading: true,
   });
 
   const { safeArea } = sheep.$platform.device;
@@ -152,8 +154,13 @@
     onMenu(withChildren >= 0 ? withChildren : 0);
   }
   onShow(async () => {
-    await getList();
-    initMenuIndex();
+    state.pageLoading = true;
+    try {
+      await getList();
+      initMenuIndex();
+    } finally {
+      state.pageLoading = false;
+    }
   });
 
   function handleScrollToLower() {

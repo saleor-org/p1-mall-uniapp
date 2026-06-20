@@ -3,6 +3,10 @@
     class="skeleton-wrap"
     :class="['theme-' + sys.mode, 'main-' + sys.theme, 'font-' + sys.fontSize]"
   >
+    <view class="skeleton-tip ss-flex ss-col-center ss-row-center">
+      <view class="skeleton-tip-spinner" />
+      <text class="skeleton-tip-text">{{ tip }}</text>
+    </view>
     <view class="skeleton-banner"></view>
     <view class="container-box">
       <view class="container-box-strip title ss-m-b-58"></view>
@@ -58,6 +62,13 @@
   import { computed } from 'vue';
   import sheep from '@/sheep';
 
+  defineProps({
+    tip: {
+      type: String,
+      default: '正在加载商品详情…',
+    },
+  });
+
   const sys = computed(() => sheep.$store('sys'));
 </script>
 
@@ -80,6 +91,26 @@
     width: 100%;
     height: 100vh;
     position: relative;
+
+    .skeleton-tip {
+      gap: 14rpx;
+      padding: 24rpx;
+      background: #f6f7f9;
+    }
+
+    .skeleton-tip-spinner {
+      width: 28rpx;
+      height: 28rpx;
+      border: 3rpx solid #ebebeb;
+      border-top-color: var(--ui-BG-Main, #e93323);
+      border-radius: 50%;
+      animation: skeleton-tip-spin 0.75s linear infinite;
+    }
+
+    .skeleton-tip-text {
+      font-size: 26rpx;
+      color: #888;
+    }
 
     .skeleton-banner {
       width: 100%;
@@ -172,6 +203,12 @@
         background: linear-gradient(90deg, var(--ui-BG-Main), var(--ui-BG-Main-gradient));
         color: $white;
       }
+    }
+  }
+
+  @keyframes skeleton-tip-spin {
+    to {
+      transform: rotate(360deg);
     }
   }
 </style>

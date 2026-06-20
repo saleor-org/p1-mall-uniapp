@@ -110,14 +110,15 @@ const user = defineStore('user', {
     },
 
     // 更新用户相关信息 (手动限流，5 秒之内不刷新)
-    async updateUserData() {
+    async updateUserData(options = {}) {
+      const force = options?.force === true;
       if (!this.isLogin) {
         this.resetUserData();
         return;
       }
       // 防抖，5 秒之内不刷新
       const nowTime = new Date().getTime();
-      if (this.lastUpdateTime + 5000 > nowTime) {
+      if (!force && this.lastUpdateTime + 5000 > nowTime) {
         return;
       }
       this.lastUpdateTime = nowTime;

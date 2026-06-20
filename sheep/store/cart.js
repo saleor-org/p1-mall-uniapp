@@ -9,34 +9,44 @@ const cart = defineStore('cart', {
     totalPriceSelected: 0, // 选中项总金额
     newList: [], // 除去已下架的购物车列表（validList）
     editMode: false, // 是否是编辑模式
+    listLoading: false,
   }),
   actions: {
     // 获取购物车列表
-    async getList() {
-      const { data, code } = await CartApi.getCartList();
-      if (code === 0) {
-        this.list = [...data.validList, ...data.invalidList];
-        this.newList = data.validList;
+    async getList(options = {}) {
+      const showSkeleton =
+        options.skeleton === true || (options.skeleton !== false && this.list.length === 0);
+      if (showSkeleton) {
+        this.listLoading = true;
+      }
+      try {
+        const { data, code } = await CartApi.getCartList();
+        if (code === 0) {
+          this.list = [...data.validList, ...data.invalidList];
+          this.newList = data.validList;
 
-        // 计算各种关联属性
-        this.selectedIds = [];
-        this.isAllSelected = true;
-        this.totalPriceSelected = 0;
-        (this.editMode ? this.list : this.newList).forEach((item) => {
-          if (item.selected) {
-            this.selectedIds.push(item.id);
-            this.totalPriceSelected += item.count * item.sku?.price;
-          } else {
-            this.isAllSelected = false;
-          }
-        });
+          // 计算各种关联属性
+          this.selectedIds = [];
+          this.isAllSelected = true;
+          this.totalPriceSelected = 0;
+          (this.editMode ? this.list : this.newList).forEach((item) => {
+            if (item.selected) {
+              this.selectedIds.push(item.id);
+              this.totalPriceSelected += item.count * item.sku?.price;
+            } else {
+              this.isAllSelected = false;
+            }
+          });
+        }
+      } finally {
+        this.listLoading = false;
       }
     },
 
     onChangeEditMode(flag) {
       this.editMode = flag;
       this.selectedIds = [];
-      this.getList();
+      this.getList({ skeleton: false });
     },
 
     // 添加购物车
@@ -48,7 +58,7 @@ const cart = defineStore('cart', {
       });
       // 刷新购物车列表
       if (code === 0) {
-        await this.getList();
+        await this.getList({ skeleton: false });
       }
     },
 
@@ -59,7 +69,7 @@ const cart = defineStore('cart', {
         count: goodsInfo.count ?? goodsInfo.goods_num,
       });
       if (code === 0) {
-        await this.getList();
+        await this.getList({ skeleton: false });
       }
     },
 
@@ -73,7 +83,7 @@ const cart = defineStore('cart', {
       }
       const { code } = await CartApi.deleteCart(idsTemp);
       if (code === 0) {
-        await this.getList();
+        await this.getList({ skeleton: false });
       }
     },
 
@@ -84,7 +94,7 @@ const cart = defineStore('cart', {
         selected: !this.selectedIds.includes(goodsId), // 取反
       });
       if (code === 0) {
-        await this.getList();
+        await this.getList({ skeleton: false });
       }
     },
 
@@ -96,7 +106,7 @@ const cart = defineStore('cart', {
         selected: flag,
       });
       if (code === 0) {
-        await this.getList();
+        await this.getList({ skeleton: false });
       }
     },
 

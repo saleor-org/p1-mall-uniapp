@@ -1,21 +1,26 @@
 <!-- 个人中心：支持装修 -->
 <template>
-  <s-layout
-    title="我的"
-    tabbar="/pages/index/user"
-    navbar="custom"
-    :bgStyle="template.page"
-    :navbarStyle="template.navigationBar"
-    onShareAppMessage
-  >
-    <s-block
-      v-for="(item, index) in template.components"
-      :key="index"
-      :styles="item.property.style"
+  <view v-if="showUserLoading" class="user-loading-wrap">
+    <s-page-loading type="user" :tip="userLoadingTip" />
+  </view>
+  <view v-else-if="template">
+    <s-layout
+      title="我的"
+      tabbar="/pages/index/user"
+      navbar="custom"
+      :bgStyle="template.page"
+      :navbarStyle="template.navigationBar"
+      onShareAppMessage
     >
-      <s-block-item :type="item.id" :data="item.property" :styles="item.property.style" />
-    </s-block>
-  </s-layout>
+      <s-block
+        v-for="(item, index) in template.components"
+        :key="index"
+        :styles="item.property.style"
+      >
+        <s-block-item :type="item.id" :data="item.property" :styles="item.property.style" />
+      </s-block>
+    </s-layout>
+  </view>
 </template>
 
 <script setup>
@@ -28,17 +33,31 @@
     fail: () => {},
   });
 
-  const template = computed(() => sheep.$store('app').template.user);
+  const appStore = computed(() => sheep.$store('app'));
+  const userLoading = computed(() => appStore.value.userLoading);
+  const template = computed(() => appStore.value.template?.user);
+  const hasUserContent = computed(() => (template.value?.components?.length || 0) > 0);
+  const showUserLoading = computed(() => userLoading.value || !hasUserContent.value);
+  const userLoadingTip = computed(() => {
+    if (userLoading.value && hasUserContent.value) {
+      return '正在更新个人中心…';
+    }
+    return '正在加载个人中心…';
+  });
 
   onShow(() => {
     sheep.$store('user').updateUserData();
   });
 
-  onPullDownRefresh(() => {
-    sheep.$store('user').updateUserData();
-    setTimeout(function () {
+  onPullDownRefresh(async () => {
+    try {
+      await Promise.all([
+        sheep.$store('app').refreshUser(),
+        sheep.$store('user').updateUserData({ force: true }),
+      ]);
+    } finally {
       uni.stopPullDownRefresh();
-    }, 800);
+    }
   });
 
   onPageScroll(() => {});

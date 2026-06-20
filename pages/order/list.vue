@@ -9,8 +9,13 @@
         :current="state.currentTab"
       />
     </su-sticky>
-    <s-empty v-if="state.pagination.total === 0" icon="/static/order-empty.png" text="暂无订单" />
-    <view v-if="state.pagination.total > 0">
+    <s-page-loading v-if="state.listLoading" type="rows" tip="正在加载订单…" />
+    <s-empty
+      v-else-if="state.pagination.total === 0"
+      icon="/static/order-empty.png"
+      text="暂无订单"
+    />
+    <view v-else-if="state.pagination.total > 0">
       <view
         class="bg-white order-list-card-box ss-r-10 ss-m-t-14 ss-m-20"
         v-for="order in state.pagination.list"
@@ -172,6 +177,7 @@
       pageSize: 5,
     },
     loadStatus: '',
+    listLoading: true,
   });
 
   const tabMaps = [
@@ -204,6 +210,7 @@
     // 重头加载代码
     resetPagination(state.pagination);
     state.currentTab = e.index;
+    state.listLoading = true;
     getOrderList();
   }
 
@@ -393,6 +400,7 @@
       status: tabMaps[state.currentTab].value,
       commentStatus: tabMaps[state.currentTab].value === 30 ? false : null,
     });
+    state.listLoading = false;
     if (code !== 0) {
       return;
     }
@@ -426,6 +434,7 @@
   // 下拉刷新
   onPullDownRefresh(() => {
     resetPagination(state.pagination);
+    state.listLoading = true;
     getOrderList();
     setTimeout(function () {
       uni.stopPullDownRefresh();

@@ -1,8 +1,6 @@
 <template>
   <s-layout title="确认订单">
-    <view v-if="state.loading" class="confirm-loading ss-flex ss-row-center ss-col-center">
-      <text class="confirm-loading-text">加载中...</text>
-    </view>
+    <s-page-loading v-if="state.loading" type="rows" tip="正在计算订单金额…" :row-count="3" />
     <template v-else-if="state.pageReady">
     <!-- 头部地址选择【配送地址】【自提地址】 -->
     <AddressSelection v-if="state.orderInfo.requiresShipping !== false" v-model="addressState" />
@@ -592,14 +590,5 @@
   .cicon-box {
     font-size: 36rpx;
     color: #999999;
-  }
-
-  .confirm-loading {
-    min-height: 60vh;
-  }
-
-  .confirm-loading-text {
-    font-size: 28rpx;
-    color: $dark-9;
   }
 </style>
