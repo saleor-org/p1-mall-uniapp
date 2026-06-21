@@ -273,21 +273,65 @@ const hydrateHomeContentFromSaleor = async (diyTemplate) => {
 };
 
 /** 初始化装修模版 */
-const adaptTemplate = async (appTemplate, templateId) => {
-  if (isSaleorBff) {
-    const diyTemplate = getMockDiyTemplate();
-    const tabBar = diyTemplate?.property?.tabBar;
-    if (tabBar) {
-      appTemplate.basic.tabbar = tabBar;
-      if (tabBar?.theme) {
-        appTemplate.basic.theme = tabBar?.theme;
-      }
+const parseDiyPayload = (data) => {
+  if (!data) return null;
+  const parse = (value, fallback = {}) => {
+    if (value == null || value === '') return fallback;
+    if (typeof value === 'object') return value;
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      return fallback;
     }
+  };
+  return {
+    id: data.id,
+    name: data.name,
+    property: parse(data.property, {}),
+    home: parse(data.home, {}),
+    user: parse(data.user, {}),
+  };
+};
+
+const applyDiyTemplate = async (appTemplate, diyTemplate, { hydrateSaleorHome = false } = {}) => {
+  const tabBar = diyTemplate?.property?.tabBar;
+  if (tabBar) {
+    appTemplate.basic.tabbar = tabBar;
+    if (tabBar?.theme) {
+      appTemplate.basic.theme = tabBar?.theme;
+    }
+  }
+  if (hydrateSaleorHome) {
     await hydrateHomeMenuFromSaleor(diyTemplate);
     await hydrateHomeContentFromSaleor(diyTemplate);
-    appTemplate.home = diyTemplate?.home;
-    appTemplate.user = diyTemplate?.user;
-    uni.setStorageSync('diy-template-revision', DIY_TEMPLATE_REVISION);
+  } else {
+    await hydrateHomeMenuFromSaleor(diyTemplate);
+  }
+  appTemplate.home = diyTemplate?.home;
+  appTemplate.user = diyTemplate?.user;
+  uni.setStorageSync('diy-template-revision', DIY_TEMPLATE_REVISION);
+};
+
+/** 初始化装修模版 */
+const adaptTemplate = async (appTemplate, templateId) => {
+  if (isSaleorBff) {
+    let diyTemplate = null;
+    let fromApi = false;
+    try {
+      const res = templateId
+        ? await DiyApi.getDiyTemplate(templateId)
+        : await DiyApi.getUsedDiyTemplate();
+      if (res?.code === 0 && res.data) {
+        diyTemplate = parseDiyPayload(res.data);
+        fromApi = !!diyTemplate;
+      }
+    } catch (error) {
+      console.warn('[p1-mall-uniapp] DIY template API failed, using local mock:', error);
+    }
+    if (!diyTemplate) {
+      diyTemplate = getMockDiyTemplate();
+    }
+    await applyDiyTemplate(appTemplate, diyTemplate, { hydrateSaleorHome: !fromApi });
     return;
   }
   let diyTemplate = null;

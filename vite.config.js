@@ -62,6 +62,11 @@ export default ({ mode }) => {
 							changeOrigin: true,
 							secure: false,
 						},
+						'/promotion': {
+							target: saleorApiTarget,
+							changeOrigin: true,
+							secure: false,
+						},
 						...(env.SHOPRO_VOCECHAT_PROXY_TARGET
 							? (() => {
 									const voceTarget = env.SHOPRO_VOCECHAT_PROXY_TARGET;

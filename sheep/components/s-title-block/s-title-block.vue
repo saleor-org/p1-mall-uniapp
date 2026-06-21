@@ -9,8 +9,12 @@
       <!-- 主标题 -->
       <view v-if="data.title" class="title-text" :style="[titleStyles]">{{ data.title }}</view>
       <!-- 副标题 -->
-      <view v-if="data.description" :style="[descStyles]" class="sub-title-text">
-        {{ data.description }}
+      <view
+        v-if="data.description || data.subtitle"
+        :style="[descStyles]"
+        class="sub-title-text"
+      >
+        {{ data.description || data.subtitle }}
       </view>
     </view>
     <!-- 查看更多 -->
@@ -73,7 +77,7 @@
 
   // 副标题
   const descStyles = {
-    color: props.data.descriptionColor,
+    color: props.data.descriptionColor || props.data.subtitleColor,
     textAlign: props.data.textAlign,
     fontSize: `${props.data.descriptionSize}px`,
     fontWeight: `${props.data.descriptionWeight}px`,
