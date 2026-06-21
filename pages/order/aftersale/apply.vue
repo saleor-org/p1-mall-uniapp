@@ -24,7 +24,7 @@
               :key="index"
             >
               <radio
-                :checked="formData.type === item.value"
+                :checked="formData.way === item.value"
                 color="var(--ui-BG-Main)"
                 style="transform: scale(0.8)"
                 :value="item.value"
@@ -84,7 +84,13 @@
           <button class="ss-reset-button contcat-btn" @tap="sheep.$router.go('/pages/chat/index')">
             联系客服
           </button>
-          <button class="ss-reset-button ui-BG-Main-Gradient sub-btn" @tap="submit">提交</button>
+          <button
+            class="ss-reset-button ui-BG-Main-Gradient sub-btn"
+            :disabled="state.submitting"
+            @tap="submit"
+          >
+            {{ state.submitting ? '提交中…' : '提交' }}
+          </button>
         </view>
       </view>
     </su-fixed>
@@ -134,20 +140,11 @@
     item: {}, // 订单项
     config: {}, // 交易配置
 
-    // 售后类型
-    wayList: [
-      {
-        text: '仅退款',
-        value: '10',
-      },
-      {
-        text: '退款退货',
-        value: '20',
-      },
-    ],
+    wayList: [],
     reasonList: [], // 可选的申请原因数组
     showModal: false, // 是否显示申请原因弹窗
     currentValue: '', // 当前选择的售后原因
+    submitting: false,
   });
   let formData = reactive({
     way: '',
@@ -157,21 +154,63 @@
   });
   const rules = reactive({});
 
-  // 提交表单
+  const REFUND_ONLY_WAY = { text: '仅退款', value: '10' };
+  const RETURN_REFUND_WAY = { text: '退款退货', value: '20' };
+
+  function buildWayList(order, item) {
+    const requiresShipping = item.requiresShipping !== false && order.requiresShipping !== false;
+    if (!requiresShipping || order.status === 10) {
+      return [REFUND_ONLY_WAY];
+    }
+    return [RETURN_REFUND_WAY];
+  }
+
+  function selectDefaultWay(wayList) {
+    if (!wayList.length) {
+      return;
+    }
+    formData.way = wayList[0].value;
+    state.reasonList =
+      formData.way === '10'
+        ? state.config.afterSaleRefundReasons || []
+        : state.config.afterSaleReturnReasons || [];
+    formData.applyReason = '';
+    state.currentValue = '';
+  }
+
+  // 提交表单（芋道：成功后 redirect 到售后列表，不可返回重复提交）
   async function submit() {
-    let data = {
-      orderId: state.orderId,
-      orderItemId: state.itemId,
-      refundPrice: state.item.payPrice,
-      ...formData,
-      way: Number(formData.way),
-    };
-    const { code } = await AfterSaleApi.createAfterSale(data);
-    if (code === 0) {
+    if (state.submitting) {
+      return;
+    }
+    if (!formData.way) {
+      sheep.$helper.toast('请选择售后类型');
+      return;
+    }
+    if (!formData.applyReason) {
+      sheep.$helper.toast('请选择申请原因');
+      return;
+    }
+    state.submitting = true;
+    try {
+      const data = {
+        orderId: state.orderId,
+        orderItemId: state.itemId,
+        refundPrice: state.item.payPrice,
+        ...formData,
+        way: Number(formData.way),
+      };
+      const res = await AfterSaleApi.createAfterSale(data);
+      if (!res || res.code !== 0) {
+        return;
+      }
       uni.showToast({
         title: '申请成功',
+        icon: 'success',
       });
       sheep.$router.redirect('/pages/order/aftersale/list');
+    } finally {
+      state.submitting = false;
     }
   }
 
@@ -215,13 +254,11 @@
     state.order = data;
     state.item = data.items.find((item) => item.id == state.itemId || item.saleorLineId === options.itemId) || {};
 
-    // 设置选项
-    if (state.order.status === 10) {
-      state.wayList.splice(1, 1);
-    }
-
     // 读取配置
     state.config = (await TradeConfigApi.getTradeConfig()).data;
+
+    state.wayList = buildWayList(state.order, state.item);
+    selectDefaultWay(state.wayList);
   });
 </script>
 

@@ -31,7 +31,8 @@ const AfterSaleApi = {
         url: `${saleorPrefix}/create`,
         method: 'POST',
         data,
-        custom: { auth: true },
+        timeout: 30000,
+        custom: { auth: true, showLoading: true, loadingMsg: '提交中…' },
       });
     }
     return request({
