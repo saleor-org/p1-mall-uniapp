@@ -136,8 +136,18 @@
                 <text class="cicon-forward"></text>
               </view>
             </view>
-            <view class="title-text ss-line-2 ss-m-b-6">{{ state.goodsInfo.name }}</view>
-            <view class="subtitle-text ss-line-1">{{ state.goodsInfo.introduction }}</view>
+            <detail-expand-text
+              class="ss-m-b-6"
+              :text="state.goodsInfo.name"
+              :max-lines="2"
+              text-class="title-text"
+            />
+            <detail-expand-text
+              v-if="state.goodsInfo.introduction"
+              :text="state.goodsInfo.introduction"
+              :max-lines="2"
+              text-class="subtitle-text"
+            />
           </view>
 
           <!-- 功能卡片 -->
@@ -164,6 +174,7 @@
         <detail-comment-card class="detail-comment-selector" :goodsId="state.goodsId" />
         <!-- 详情 -->
         <detail-content-card
+          v-if="state.goodsInfo.description"
           class="detail-content-selector"
           :content="state.goodsInfo.description"
         />
@@ -230,6 +241,7 @@
   import detailCommentCard from './components/detail/detail-comment-card.vue';
   import detailContentCard from './components/detail/detail-content-card.vue';
   import detailActivityTip from './components/detail/detail-activity-tip.vue';
+  import detailExpandText from './components/detail/detail-expand-text.vue';
   import { isEmpty } from 'lodash-es';
   import SpuApi from '@/sheep/api/product/spu';
   import SpuHistoryApi from '@/sheep/api/product/history';

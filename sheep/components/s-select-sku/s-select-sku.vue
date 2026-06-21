@@ -69,8 +69,8 @@
           <view class="buy-num-box ss-flex ss-col-center ss-row-between ss-m-b-40">
             <view class="label-text">购买数量</view>
             <su-number-box
-              :min="1"
-              :max="state.selectedSku.stock"
+              :min="buyMinCount"
+              :max="buyMaxCount"
               :step="1"
               v-model="state.selectedSku.goods_num"
               @change="onNumberChange($event)"
@@ -141,6 +141,65 @@
     return skuPrices;
   });
 
+  function resolveBuyMinCount(sku) {
+    const min = Number(sku?.buyMinCount);
+    return Number.isFinite(min) && min > 0 ? Math.floor(min) : 1;
+  }
+
+  function resolveBuyMaxCount(sku) {
+    const stock = Number(sku?.stock) || 0;
+    const limit = Number(sku?.buyMaxCount);
+    if (Number.isFinite(limit) && limit > 0) {
+      return Math.max(0, Math.min(stock, Math.floor(limit)));
+    }
+    return stock;
+  }
+
+  function clampGoodsNum(sku) {
+    const min = resolveBuyMinCount(sku);
+    const max = resolveBuyMaxCount(sku);
+    const current = Number(sku?.goods_num);
+    let num = Number.isFinite(current) && current > 0 ? Math.floor(current) : min;
+    if (max < min) {
+      return min;
+    }
+    return Math.min(Math.max(num, min), max);
+  }
+
+  const buyMinCount = computed(() => resolveBuyMinCount(state.selectedSku));
+  const buyMaxCount = computed(() => resolveBuyMaxCount(state.selectedSku));
+
+  function validateBuyQuantity() {
+    const min = buyMinCount.value;
+    const max = buyMaxCount.value;
+    const num = Number(state.selectedSku.goods_num) || 0;
+    if (max < min || max <= 0) {
+      return '库存不足';
+    }
+    if (num < min || num > max) {
+      return min === max ? `购买数量需为 ${min}` : `购买数量需在 ${min}-${max} 之间`;
+    }
+    return '';
+  }
+
+  watch(
+    () => [
+      state.selectedSku.id,
+      state.selectedSku.stock,
+      state.selectedSku.buyMinCount,
+      state.selectedSku.buyMaxCount,
+    ],
+    () => {
+      if (!state.selectedSku.id) {
+        return;
+      }
+      const clamped = clampGoodsNum(state.selectedSku);
+      if (state.selectedSku.goods_num !== clamped) {
+        state.selectedSku.goods_num = clamped;
+      }
+    },
+  );
+
   watch(
     () => state.selectedSku,
     (newVal) => {
@@ -177,6 +236,11 @@
       sheep.$helper.toast('库存不足');
       return;
     }
+    const qtyError = validateBuyQuantity();
+    if (qtyError) {
+      sheep.$helper.toast(qtyError);
+      return;
+    }
     const formValues = readFormValues();
     const formError = formFieldsRef.value?.validate?.(formValues) || '';
     if (formError) {
@@ -198,6 +262,11 @@
     }
     if (state.selectedSku.stock <= 0) {
       sheep.$helper.toast('库存不足');
+      return;
+    }
+    const qtyError = validateBuyQuantity();
+    if (qtyError) {
+      sheep.$helper.toast(qtyError);
       return;
     }
     const formValues = readFormValues();
@@ -338,8 +407,14 @@
 
     // 判断所有 property 大类是否选择完成
     if (choosePropertyId.length === propertyList.length && newSkuList.length) {
-      newSkuList[0].goods_num = state.selectedSku.goods_num || 1;
-      state.selectedSku = newSkuList[0];
+      const nextSku = {
+        ...newSkuList[0],
+        goods_num: clampGoodsNum({
+          ...newSkuList[0],
+          goods_num: state.selectedSku.goods_num,
+        }),
+      };
+      state.selectedSku = nextSku;
     } else {
       state.selectedSku = {};
     }
@@ -351,7 +426,10 @@
   changeDisabled(false);
   // 单 SKU：无规格维度或仅一个占位规格时，直接选中
   if (skuList.value.length === 1) {
-    const only = { ...skuList.value[0], goods_num: state.selectedSku.goods_num || 1 };
+    const only = {
+      ...skuList.value[0],
+      goods_num: clampGoodsNum(skuList.value[0]),
+    };
     if (propertyList.length === 0) {
       state.selectedSku = only;
     } else if (propertyList.length === 1 && (propertyList[0].values || []).length === 1) {
