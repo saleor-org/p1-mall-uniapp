@@ -10,9 +10,14 @@
         :current="state.currentTab"
       />
     </su-sticky>
-    <s-empty v-if="state.pagination.total === 0" icon="/static/data-empty.png" text="暂无数据" />
+    <s-page-loading v-if="state.listLoading" type="rows" tip="正在加载售后…" />
+    <s-empty
+      v-else-if="state.pagination.total === 0"
+      icon="/static/order-empty.png"
+      text="暂无售后"
+    />
     <!-- 列表 -->
-    <view v-if="state.pagination.total > 0">
+    <view v-else-if="state.pagination.total > 0">
       <view
         class="list-box ss-m-y-20"
         v-for="order in state.pagination.list"
@@ -50,7 +55,7 @@
       </view>
     </view>
     <uni-load-more
-      v-if="state.pagination.total > 0"
+      v-if="!state.listLoading && state.pagination.total > 0"
       :status="state.loadStatus"
       :content-text="{
         contentdown: '上拉加载更多',
@@ -62,7 +67,7 @@
 
 <script setup>
   import sheep from '@/sheep';
-  import { onLoad, onReachBottom } from '@dcloudio/uni-app';
+  import { onLoad, onReachBottom, onPullDownRefresh, onShow } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
   import { concat } from 'lodash-es';
   import {
@@ -83,7 +88,11 @@
       pageSize: 10,
     },
     loadStatus: '',
+    listLoading: true,
   });
+
+  let listLoadSeq = 0;
+  let pageReady = false;
 
   const tabMaps = [
     {
@@ -108,26 +117,56 @@
     },
   ];
 
-  // 切换选项卡
   function onTabsChange(e) {
+    if (state.currentTab === e.index) {
+      return;
+    }
     resetPagination(state.pagination);
     state.currentTab = e.index;
+    state.listLoading = true;
     getOrderList();
   }
 
-  // 获取售后列表
   async function getOrderList() {
+    const seq = ++listLoadSeq;
     state.loadStatus = 'loading';
     let { data, code } = await AfterSaleApi.getAfterSalePage({
       pageNo: state.pagination.pageNo,
       pageSize: state.pagination.pageSize,
       statuses: tabMaps[state.currentTab].value.join(','),
     });
+    if (seq !== listLoadSeq) {
+      return;
+    }
+    state.listLoading = false;
     if (code !== 0) {
+      state.loadStatus = 'more';
       return;
     }
     data.list.forEach((order) => handleAfterSaleButtons(order));
-    state.pagination.list = concat(state.pagination.list, data.list);
+    if (state.pagination.pageNo === 1) {
+      state.pagination.list = data.list;
+    } else {
+      state.pagination.list = concat(state.pagination.list, data.list);
+    }
+    state.pagination.total = data.total;
+    state.loadStatus = state.pagination.list.length < state.pagination.total ? 'more' : 'noMore';
+  }
+
+  /** 从详情返回：保留当前列表，静默刷新第一页（与订单列表体验一致） */
+  async function refreshFirstPageSilently() {
+    const seq = ++listLoadSeq;
+    const { data, code } = await AfterSaleApi.getAfterSalePage({
+      pageNo: 1,
+      pageSize: state.pagination.pageSize,
+      statuses: tabMaps[state.currentTab].value.join(','),
+    });
+    if (seq !== listLoadSeq || code !== 0) {
+      return;
+    }
+    data.list.forEach((order) => handleAfterSaleButtons(order));
+    state.pagination.pageNo = 1;
+    state.pagination.list = data.list;
     state.pagination.total = data.total;
     state.loadStatus = state.pagination.list.length < state.pagination.total ? 'more' : 'noMore';
   }
@@ -143,6 +182,7 @@
         const { code } = await AfterSaleApi.cancelAfterSale(orderId);
         if (code === 0) {
           resetPagination(state.pagination);
+          state.listLoading = true;
           await getOrderList();
         }
       },
@@ -151,23 +191,39 @@
 
   onLoad(async (options) => {
     if (options.type) {
-      state.currentTab = options.type;
+      state.currentTab = Number(options.type) || 0;
     }
     await getOrderList();
+    pageReady = true;
   });
 
-  // 加载更多
+  onShow(async () => {
+    if (!pageReady || state.listLoading) {
+      return;
+    }
+    await refreshFirstPageSilently();
+  });
+
   function loadMore() {
-    if (state.loadStatus === 'noMore') {
+    if (state.loadStatus === 'noMore' || state.listLoading) {
       return;
     }
     state.pagination.pageNo++;
     getOrderList();
   }
 
-  // 上拉加载更多
   onReachBottom(() => {
     loadMore();
+  });
+
+  onPullDownRefresh(async () => {
+    resetPagination(state.pagination);
+    state.listLoading = true;
+    try {
+      await getOrderList();
+    } finally {
+      uni.stopPullDownRefresh();
+    }
   });
 </script>
 

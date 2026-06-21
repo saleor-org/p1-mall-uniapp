@@ -136,7 +136,7 @@
 
 <script setup>
   import sheep from '@/sheep';
-  import { onLoad } from '@dcloudio/uni-app';
+  import { onLoad, onShow, onUnload } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
   import { isEmpty } from 'lodash-es';
   import {
@@ -148,6 +148,9 @@
 
   const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
   const headerBg = sheep.$url.css('/static/img/shop/order/order_bg.png');
+  const REFUND_POLL_MS = 3000;
+  const REFUND_POLL_MAX = 40;
+  let refundPollTimer = null;
   const state = reactive({
     id: 0, // 售后编号
     info: {}, // 收货信息
@@ -207,7 +210,38 @@
     } else if ([61, 62, 63].includes(state.info.status)) {
       state.active = 2;
     }
+    scheduleRefundPoll();
   }
+
+  function clearRefundPoll() {
+    if (refundPollTimer) {
+      clearTimeout(refundPollTimer);
+      refundPollTimer = null;
+    }
+  }
+
+  function scheduleRefundPoll(pollCount = 0) {
+    clearRefundPoll();
+    if (!state.info || state.info.status !== 10 || pollCount >= REFUND_POLL_MAX) {
+      return;
+    }
+    refundPollTimer = setTimeout(async () => {
+      await getDetail(state.id);
+      if (state.info && state.info.status === 10) {
+        scheduleRefundPoll(pollCount + 1);
+      }
+    }, REFUND_POLL_MS);
+  }
+
+  onShow(() => {
+    if (state.id) {
+      getDetail(state.id);
+    }
+  });
+
+  onUnload(() => {
+    clearRefundPoll();
+  });
 
   onLoad((options) => {
     if (!options.id) {

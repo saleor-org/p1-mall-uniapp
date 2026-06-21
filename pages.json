@@ -228,7 +228,8 @@
 				{
 					"path": "aftersale/list",
 					"style": {
-						"navigationBarTitleText": "售后列表"
+						"navigationBarTitleText": "售后列表",
+						"enablePullDownRefresh": true
 					},
 					"meta": {
 						"auth": true,

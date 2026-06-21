@@ -590,9 +590,13 @@
     // onShow 中获取订单列表,保证跳转后页面为最新状态
     // 有几率在 onLoad 完成 state.orderInfo.id 赋值前进入 onShow
     if (state.orderInfo.id) {
+      const hasPendingAfterSale = (state.orderInfo.items || []).some(
+        (item) => item.afterSaleStatus === 10,
+      );
       const needSync =
         isSaleorBff &&
-        (state.orderInfo.fulfillStatus === 'processing' ||
+        (hasPendingAfterSale ||
+          state.orderInfo.fulfillStatus === 'processing' ||
           (state.orderInfo.fulfillStatus === 'failed' &&
             !hasSupplierOrderAccepted(state.orderInfo)));
       await getOrderDetail(state.orderInfo.id, needSync);
