@@ -240,8 +240,8 @@ const adaptTenant = async () => {
   }
 };
 
-/** 装修模板版本：变更后强制重载 mock，避免 pinia 缓存旧首页布局盖住搜索框 */
-const DIY_TEMPLATE_REVISION = 9;
+/** 装修模板版本：变更后强制重载，避免 pinia 缓存旧首页布局 */
+const DIY_TEMPLATE_REVISION = 10;
 
 /** Saleor：用后台分类替换首页金刚区静态 mock */
 const hydrateHomeMenuFromSaleor = async (diyTemplate) => {
@@ -293,7 +293,7 @@ const parseDiyPayload = (data) => {
   };
 };
 
-const applyDiyTemplate = async (appTemplate, diyTemplate, { hydrateSaleorHome = false } = {}) => {
+const applyDiyTemplate = async (appTemplate, diyTemplate) => {
   const tabBar = diyTemplate?.property?.tabBar;
   if (tabBar) {
     appTemplate.basic.tabbar = tabBar;
@@ -301,12 +301,9 @@ const applyDiyTemplate = async (appTemplate, diyTemplate, { hydrateSaleorHome = 
       appTemplate.basic.theme = tabBar?.theme;
     }
   }
-  if (hydrateSaleorHome) {
-    await hydrateHomeMenuFromSaleor(diyTemplate);
-    await hydrateHomeContentFromSaleor(diyTemplate);
-  } else {
-    await hydrateHomeMenuFromSaleor(diyTemplate);
-  }
+  // Saleor 原生：分类 / 系列轮播 / 公告 覆盖装修模板里的对应组件内容
+  await hydrateHomeMenuFromSaleor(diyTemplate);
+  await hydrateHomeContentFromSaleor(diyTemplate);
   appTemplate.home = diyTemplate?.home;
   appTemplate.user = diyTemplate?.user;
   uni.setStorageSync('diy-template-revision', DIY_TEMPLATE_REVISION);
@@ -316,14 +313,12 @@ const applyDiyTemplate = async (appTemplate, diyTemplate, { hydrateSaleorHome = 
 const adaptTemplate = async (appTemplate, templateId) => {
   if (isSaleorBff) {
     let diyTemplate = null;
-    let fromApi = false;
     try {
       const res = templateId
         ? await DiyApi.getDiyTemplate(templateId)
         : await DiyApi.getUsedDiyTemplate();
       if (res?.code === 0 && res.data) {
         diyTemplate = parseDiyPayload(res.data);
-        fromApi = !!diyTemplate;
       }
     } catch (error) {
       console.warn('[p1-mall-uniapp] DIY template API failed, using local mock:', error);
@@ -331,7 +326,7 @@ const adaptTemplate = async (appTemplate, templateId) => {
     if (!diyTemplate) {
       diyTemplate = getMockDiyTemplate();
     }
-    await applyDiyTemplate(appTemplate, diyTemplate, { hydrateSaleorHome: !fromApi });
+    await applyDiyTemplate(appTemplate, diyTemplate);
     return;
   }
   let diyTemplate = null;
