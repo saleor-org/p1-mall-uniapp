@@ -130,16 +130,27 @@
   async function getOrderList() {
     const seq = ++listLoadSeq;
     state.loadStatus = 'loading';
-    let { data, code } = await AfterSaleApi.getAfterSalePage({
-      pageNo: state.pagination.pageNo,
-      pageSize: state.pagination.pageSize,
-      statuses: tabMaps[state.currentTab].value.join(','),
-    });
+    let data;
+    let code;
+    try {
+      ({ data, code } = await AfterSaleApi.getAfterSalePage({
+        pageNo: state.pagination.pageNo,
+        pageSize: state.pagination.pageSize,
+        statuses: tabMaps[state.currentTab].value.join(','),
+      }));
+    } catch {
+      if (seq !== listLoadSeq) {
+        return;
+      }
+      state.listLoading = false;
+      state.loadStatus = 'more';
+      return;
+    }
     if (seq !== listLoadSeq) {
       return;
     }
     state.listLoading = false;
-    if (code !== 0) {
+    if (code !== 0 || !data) {
       state.loadStatus = 'more';
       return;
     }

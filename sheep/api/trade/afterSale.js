@@ -12,6 +12,7 @@ const AfterSaleApi = {
         url: `${saleorPrefix}/page`,
         method: 'GET',
         params,
+        timeout: 30000,
         custom: { showLoading: false, auth: true },
       });
     }

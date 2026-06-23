@@ -22,18 +22,17 @@ const SpuApi = {
       if (slugs.length === 0) {
         return saleorEmpty.list();
       }
-      return Promise.all(
-        slugs.map((slug) =>
-          request({
-            url: `/mall/v1/products/${encodeURIComponent(slug)}`,
-            method: 'GET',
-            custom: { showLoading: false, showError: false },
-          }),
-        ),
-      ).then((results) => ({
-        code: 0,
-        data: results.filter((r) => r.code === 0 && r.data).map((r) => mapProductCard(r.data)),
-      }));
+      return request({
+        url: '/mall/v1/products/by-slugs',
+        method: 'GET',
+        params: { slugs: slugs.join(',') },
+        custom: { showLoading: false, showError: false },
+      }).then((res) => {
+        if (res.code !== 0 || !Array.isArray(res.data)) {
+          return res;
+        }
+        return { code: 0, data: res.data.map((item) => mapProductCard(item)) };
+      });
     }
     return request({
       url: '/product/spu/list-by-ids',

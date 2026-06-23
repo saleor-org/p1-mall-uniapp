@@ -63,6 +63,7 @@
   import { showShareModal } from '@/sheep/hooks/useModal';
   import SpuApi from '@/sheep/api/product/spu';
   import BrokerageApi from '@/sheep/api/trade/brokerage';
+  import { isSaleorBff } from '@/sheep/helper/saleor';
   import { fen2yuan } from '@/sheep/hooks/useGoods';
 
   const state = reactive({
@@ -110,18 +111,31 @@
       return;
     }
 
-    // 使用 Promise.all 来等待所有佣金请求完成
-    await Promise.all(
-      data.list.map(async (item) => {
-        try {
-          const res = await BrokerageApi.getProductBrokeragePrice(item.id);
-          item.brokerageMinPrice = res.data.brokerageMinPrice;
-          item.brokerageMaxPrice = res.data.brokerageMaxPrice;
-        } catch (error) {
-          console.error(`获取商品【${item.name}】的佣金时出错：`, error);
-        }
-      }),
-    );
+    if (isSaleorBff && data.list?.length) {
+      const spuIds = data.list.map((item) => item.id).join(',');
+      const { code: bc, data: brokerageMap } = await BrokerageApi.getProductsBrokeragePrice(spuIds);
+      if (bc === 0 && brokerageMap) {
+        data.list.forEach((item) => {
+          const row = brokerageMap[item.id];
+          if (row) {
+            item.brokerageMinPrice = row.brokerageMinPrice;
+            item.brokerageMaxPrice = row.brokerageMaxPrice;
+          }
+        });
+      }
+    } else {
+      await Promise.all(
+        data.list.map(async (item) => {
+          try {
+            const res = await BrokerageApi.getProductBrokeragePrice(item.id);
+            item.brokerageMinPrice = res.data.brokerageMinPrice;
+            item.brokerageMaxPrice = res.data.brokerageMaxPrice;
+          } catch (error) {
+            console.error(`获取商品【${item.name}】的佣金时出错：`, error);
+          }
+        }),
+      );
+    }
 
     // 在所有请求完成后合并列表和更新状态
     state.pagination.list = concat(state.pagination.list, data.list);

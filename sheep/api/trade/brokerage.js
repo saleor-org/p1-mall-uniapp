@@ -135,6 +135,41 @@ const BrokerageApi = {
       params: { spuId },
     });
   },
+  getProductsBrokeragePrice: (spuIds) => {
+    const ids = String(spuIds || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!ids.length) {
+      return saleorEmpty.ok({});
+    }
+    if (isSaleorBff) {
+      return request({
+        url: '/mall/v1/trade/brokerage-record/get-products-brokerage-price',
+        method: 'GET',
+        params: { spuIds: ids.join(',') },
+        custom: { auth: true, showLoading: false, showError: false },
+      });
+    }
+    return Promise.all(
+      ids.map((spuId) =>
+        request({
+          url: '/trade/brokerage-record/get-product-brokerage-price',
+          method: 'GET',
+          params: { spuId },
+        }),
+      ),
+    ).then((results) => {
+      const data = {};
+      ids.forEach((spuId, index) => {
+        const row = results[index];
+        if (row?.code === 0 && row.data) {
+          data[spuId] = row.data;
+        }
+      });
+      return { code: 0, data };
+    });
+  },
   // 获得分销用户排行（基于佣金）
   getRankByPrice: (params) => {
     if (isSaleorBff) {

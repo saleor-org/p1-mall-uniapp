@@ -302,9 +302,10 @@
     if (isEmpty(list)) {
       return;
     }
-    // 循环获取活动商品SPU详情并添加到spuList
-    for (const activity of list) {
-      state.spuList.push(await getSpuDetail(activity.spuId));
+    const spuIds = list.map((activity) => activity.spuId).filter(Boolean);
+    if (spuIds.length) {
+      const { data: spuList } = await SpuApi.getSpuListByIds(spuIds.join(','));
+      state.spuList.push(...(spuList || []));
     }
 
     // 循环活动列表
