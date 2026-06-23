@@ -2,6 +2,7 @@
 
 import SFormWidgetExpressPickup from '@/sheep/components/s-form-widget-express-pickup/s-form-widget-express-pickup.vue';
 import SFormWidgetOauthPick from '@/sheep/components/s-form-widget-oauth-pick/s-form-widget-oauth-pick.vue';
+import SFormWidgetPickupStore from '@/sheep/components/s-form-widget-pickup-store/s-form-widget-pickup-store.vue';
 
 export const DISPLAY_ONLY_FIELD_TYPES = new Set(['group', 'divider', 'action', 'fee-breakdown']);
 
@@ -53,6 +54,7 @@ export function buildFeeBreakdownRows(field, values) {
 const WIDGET_REGISTRY = {
   'express-pickup': SFormWidgetExpressPickup,
   'oauth-movie': SFormWidgetOauthPick,
+  'pickup-store': SFormWidgetPickupStore,
 };
 
 export function fieldProps(field) {
