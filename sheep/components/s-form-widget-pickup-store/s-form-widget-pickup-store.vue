@@ -8,8 +8,26 @@
     <view v-else>
       <view class="loc-row">
         <text class="loc-label">当前位置</text>
-        <text class="loc-value">{{ state.locationText }}</text>
+        <view class="loc-main">
+          <text class="loc-value">{{ state.locationAddress || state.locationText }}</text>
+          <text v-if="state.locationAddress" class="loc-coords">{{ state.locationText }}</text>
+        </view>
         <button class="btn ghost" size="mini" @tap="refresh">刷新</button>
+      </view>
+
+      <view class="eat-type-row">
+        <text class="eat-type-label">就餐方式</text>
+        <view class="eat-type-options">
+          <view
+            v-for="opt in EAT_TYPE_OPTIONS"
+            :key="opt.value"
+            class="eat-type-item"
+            :class="{ active: state.eatType === opt.value }"
+            @tap="selectEatType(opt)"
+          >
+            {{ opt.label }}
+          </view>
+        </view>
       </view>
 
       <view v-if="!state.stores.length" class="tip">附近暂无{{ state.brandLabel }}门店，请扩大范围或稍后重试</view>
@@ -34,7 +52,7 @@
       </scroll-view>
 
       <view v-if="state.selected" class="selected-box">
-        已选：{{ state.selected.name }}
+        已选：{{ state.selected.name }} · {{ eatTypeLabel() }}
       </view>
     </view>
   </view>
@@ -52,17 +70,30 @@
 
   const emits = defineEmits(['update:modelValue']);
 
+  /** 与 mcd.mdl8.cn eat_type 一致，label 为 H5 展示文案 */
+  const EAT_TYPE_OPTIONS = [
+    { label: '打包带走', value: '店内自提' },
+    { label: '店里就餐', value: '店内就餐' },
+  ];
+  const DEFAULT_EAT_TYPE = EAT_TYPE_OPTIONS[0].value;
+
   const state = reactive({
     loading: true,
     error: '',
     brand: 'mcd',
     brandLabel: '麦当劳',
     locationText: '',
+    locationAddress: '',
     lat: null,
     lng: null,
     stores: [],
     selected: null,
+    eatType: DEFAULT_EAT_TYPE,
   });
+
+  function eatTypeLabel(value = state.eatType) {
+    return EAT_TYPE_OPTIONS.find((opt) => opt.value === value)?.label || value || '';
+  }
 
   function widgetBrand() {
     return String(fieldProps(props.field).brand || 'mcd').trim().toLowerCase();
@@ -80,12 +111,17 @@
   }
 
   function buildValues() {
+    const values = {
+      pickup_brand: state.brand,
+      pickup_eat_type: state.eatType,
+      pickup_eat_type_label: eatTypeLabel(),
+    };
     if (!state.selected) {
-      return {};
+      return values;
     }
     const item = state.selected;
     return {
-      pickup_brand: state.brand,
+      ...values,
       pickup_store_code: item.code,
       pickup_store_name: item.name,
       pickup_store_address: item.address,
@@ -114,6 +150,15 @@
     if (parsed.pickup_brand) {
       state.brand = String(parsed.pickup_brand).trim().toLowerCase();
     }
+    const eatType = String(parsed.pickup_eat_type || '').trim();
+    if (eatType && EAT_TYPE_OPTIONS.some((opt) => opt.value === eatType)) {
+      state.eatType = eatType;
+    }
+  }
+
+  function selectEatType(opt) {
+    state.eatType = opt.value;
+    emitValues();
   }
 
   function selectStore(item) {
@@ -145,6 +190,33 @@
     }
   }
 
+  function buildNearbyHint(stores) {
+    if (!Array.isArray(stores) || !stores.length) return '';
+    const item = stores[0];
+    const parts = [item.province, item.city].filter(Boolean);
+    if (!parts.length) return '';
+    return `${parts.join('')}附近`;
+  }
+
+  async function loadLocationLabel(lat, lng, nearbyHint = '') {
+    state.locationText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    state.locationAddress = '';
+    try {
+      const res = await PickupStoreApi.getLocationLabel({ lat, lng, nearbyHint });
+      if (res.code !== 0 || !res.data) return;
+      const address = String(res.data.address || '').trim();
+      const coords = String(res.data.coordinates || '').trim();
+      if (address) {
+        state.locationAddress = address;
+      }
+      if (coords) {
+        state.locationText = coords;
+      }
+    } catch (_) {
+      /* keep coordinates only */
+    }
+  }
+
   async function loadNearby() {
     state.loading = true;
     state.error = '';
@@ -155,7 +227,6 @@
       const loc = await locate();
       state.lat = loc.latitude;
       state.lng = loc.longitude;
-      state.locationText = `${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}`;
 
       const res = await PickupStoreApi.getNearby({
         brand: state.brand,
@@ -166,10 +237,12 @@
       if (res.code !== 0) {
         state.error = res.msg || '加载附近门店失败';
         state.stores = [];
+        await loadLocationLabel(loc.latitude, loc.longitude);
         return;
       }
       state.stores = Array.isArray(res.data?.list) ? res.data.list : [];
       state.brandLabel = res.data?.brandLabel || state.brandLabel;
+      await loadLocationLabel(loc.latitude, loc.longitude, buildNearbyHint(state.stores));
       if (!state.stores.length) {
         state.error = `附近 ${res.data?.maxKm || 30}km 内暂无门店`;
       }
@@ -191,6 +264,9 @@
   }
 
   function validate() {
+    if (!state.eatType) {
+      return '请选择就餐方式';
+    }
     if (!state.selected?.code) {
       return `请选择${props.field?.label || '门店'}`;
     }
@@ -200,6 +276,7 @@
   onMounted(() => {
     applyModelValue(props.modelValue);
     loadNearby();
+    emitValues();
   });
 
   watch(
@@ -228,7 +305,7 @@
 
   .loc-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12rpx;
     padding: 12rpx 0 20rpx;
     font-size: 24rpx;
@@ -238,15 +315,66 @@
   .loc-label {
     flex-shrink: 0;
     color: #999;
+    line-height: 1.5;
+    padding-top: 2rpx;
+  }
+
+  .loc-main {
+    flex: 1;
+    min-width: 0;
   }
 
   .loc-value {
-    flex: 1;
+    display: block;
+    word-break: break-all;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .loc-coords {
+    display: block;
+    margin-top: 4rpx;
+    font-size: 22rpx;
+    color: #aaa;
     word-break: break-all;
   }
 
+  .eat-type-row {
+    padding: 0 0 20rpx;
+  }
+
+  .eat-type-label {
+    display: block;
+    margin-bottom: 12rpx;
+    font-size: 24rpx;
+    color: #999;
+  }
+
+  .eat-type-options {
+    display: flex;
+    gap: 16rpx;
+  }
+
+  .eat-type-item {
+    flex: 1;
+    padding: 16rpx 12rpx;
+    border: 1px solid #eee;
+    border-radius: 12rpx;
+    background: #fafafa;
+    text-align: center;
+    font-size: 26rpx;
+    color: #333;
+  }
+
+  .eat-type-item.active {
+    border-color: #e74c3c;
+    background: #fff7f6;
+    color: #e74c3c;
+    font-weight: 600;
+  }
+
   .store-list {
-    max-height: 520rpx;
+    max-height: 680rpx;
   }
 
   .store-item {

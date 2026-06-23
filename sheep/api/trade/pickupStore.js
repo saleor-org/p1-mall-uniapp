@@ -22,6 +22,17 @@ const PickupStoreApi = {
       },
       custom: { showLoading: false, showError: false },
     }),
+  getLocationLabel: ({ lat, lng, nearbyHint = '' }) =>
+    request({
+      url: `${prefix}/location-label`,
+      method: 'GET',
+      params: {
+        lat,
+        lng,
+        ...(nearbyHint ? { nearbyHint } : {}),
+      },
+      custom: { showLoading: false, showError: false },
+    }),
 };
 
 export default PickupStoreApi;

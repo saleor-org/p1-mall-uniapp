@@ -476,7 +476,7 @@
 
   .ss-modal-box {
     border-radius: 30rpx 30rpx 0 0;
-    max-height: 1000rpx;
+    max-height: 88vh;
 
     .modal-header {
       position: relative;
@@ -543,7 +543,7 @@
       padding: 0 20rpx;
 
       .modal-content-scroll {
-        max-height: 600rpx;
+        max-height: 62vh;
 
         .label-text {
           font-size: 26rpx;
