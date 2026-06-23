@@ -6,6 +6,10 @@ const cdn = (url = '', cdnurl = '') => {
   if (url.indexOf('http') === 0) {
     return url;
   }
+  // 本地 static：Saleor H5 同源加载，不依赖芋道 CDN
+  if (url.indexOf('/static/') === 0) {
+    return url;
+  }
   // BFF 本地上传：同源 /mall/v1/files/*
   if (url.indexOf('/mall/') === 0) {
     return (baseUrl || '') + url;

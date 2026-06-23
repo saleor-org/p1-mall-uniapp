@@ -13,26 +13,26 @@ const tabBar = {
     {
       text: '首页',
       url: '/pages/index/index',
-      iconUrl: '',
-      activeIconUrl: '',
+      iconUrl: '/static/img/shop/tabbar/home.png',
+      activeIconUrl: '/static/img/shop/tabbar/home-active.png',
     },
     {
       text: '分类',
       url: '/pages/index/category',
-      iconUrl: '',
-      activeIconUrl: '',
+      iconUrl: '/static/img/shop/tabbar/category.png',
+      activeIconUrl: '/static/img/shop/tabbar/category-active.png',
     },
     {
       text: '购物车',
       url: '/pages/index/cart',
-      iconUrl: '',
-      activeIconUrl: '',
+      iconUrl: '/static/img/shop/tabbar/cart.png',
+      activeIconUrl: '/static/img/shop/tabbar/cart-active.png',
     },
     {
       text: '我的',
       url: '/pages/index/user',
-      iconUrl: '',
-      activeIconUrl: '',
+      iconUrl: '/static/img/shop/tabbar/user.png',
+      activeIconUrl: '/static/img/shop/tabbar/user-active.png',
     },
   ],
 };
@@ -47,8 +47,8 @@ const userPageStyle = {
   borderRadius: 8,
 };
 
-const staticBase = 'http://test.yudao.iocoder.cn/static/img/shop';
-const diyBase = 'http://test.yudao.iocoder.cn/static/img/diy';
+const diyBase = '/static/img/diy';
+const menuSwiperBase = '/static/diy/menu-swiper';
 
 const menuBadge = { show: false, textColor: '#fff', bgColor: '#FF6000' };
 
@@ -64,66 +64,17 @@ function menuSwiperItem(title, iconUrl, url = '/pages/index/category') {
 }
 
 const homeMenuSwiperList = [
-  menuSwiperItem(
-    '童装童鞋',
-    'http://test.yudao.iocoder.cn/1dc5d968737a990719e95492ebc9e3f8b0308214b503c51887f442f7c7584321.jpg',
-  ),
-  menuSwiperItem(
-    '家用电器',
-    'http://test.yudao.iocoder.cn/d71510c1ca5c5e4c7dd445da9f9357bf169978ed84febeb35ccf6dc0951a18e9.jpg',
-  ),
-  menuSwiperItem(
-    '电子数码',
-    'http://test.yudao.iocoder.cn/7e600e817c8ec0f2f747f41b59e1a3ac28ac850a9b77ed78d69af5fadbef700e.jpg',
-  ),
-  menuSwiperItem(
-    '美妆个护',
-    'http://test.yudao.iocoder.cn/e5ba252dbc6423327fec784f5775f55355f17fd6a2440919a2d91c4e541dfa81.png',
-  ),
-  menuSwiperItem(
-    '母婴用品',
-    'http://test.yudao.iocoder.cn/7d5e76eea5f29773a8962fabb0131d012434ee4cae3ddb416d135e20f89123eb.jpg',
-  ),
-  menuSwiperItem(
-    'T 恤',
-    'http://test.yudao.iocoder.cn/1abe3ad4bcfe1f8e335873dd8718d40bbafc24a3693408966316fc827fefd771.png',
-  ),
-  menuSwiperItem(
-    '裙子',
-    'http://test.yudao.iocoder.cn/8313fe1abaedf15940f77e91d797fe8f24489e13ecfef2214a2474de2a1807e6.png',
-  ),
-  menuSwiperItem(
-    '汉服',
-    'http://test.yudao.iocoder.cn/20251008/blob_1752042302026_1759890648228.jpg',
-  ),
-  menuSwiperItem(
-    '护肤套装',
-    'http://test.yudao.iocoder.cn/a86aad413989d547e91b46b83721ac48a3271edacd05022b11c75ba2a5c0b3a8.png',
-  ),
-  menuSwiperItem(
-    '运动鞋',
-    'http://test.yudao.iocoder.cn/c204a4f7d9ffe946abe9dd9c4014f05f166d8fbb27ac4cdd55de1f7fa0821701.png',
-  ),
+  menuSwiperItem('童装童鞋', `${menuSwiperBase}/01-tongzhuang.jpg`),
+  menuSwiperItem('家用电器', `${menuSwiperBase}/02-jiadian.jpg`),
+  menuSwiperItem('电子数码', `${menuSwiperBase}/03-shuma.jpg`),
+  menuSwiperItem('美妆个护', `${menuSwiperBase}/04-meizhuang.png`),
+  menuSwiperItem('母婴用品', `${menuSwiperBase}/05-muying.jpg`),
+  menuSwiperItem('T 恤', `${menuSwiperBase}/06-txu.png`),
+  menuSwiperItem('裙子', `${menuSwiperBase}/07-qunzi.png`),
+  menuSwiperItem('汉服', `${menuSwiperBase}/08-hanfu.jpg`),
+  menuSwiperItem('护肤套装', `${menuSwiperBase}/09-hufu.png`),
+  menuSwiperItem('运动鞋', `${menuSwiperBase}/10-yundong.png`),
 ];
-
-const menuIconMap = {
-  'sign.png': '/static/img/shop/app/sign.png',
-  'recharge.png': '/static/img/shop/user/wallet_icon.png',
-  'withdraw.png': '/static/img/shop/commission/commission_icon2.png',
-  'setting.png': '/static/img/shop/tools/service.png',
-  'goods-collect.png': '/static/img/shop/tools/collect.png',
-  'goods-log.png': '/static/img/shop/tools/browse.png',
-  'feedback.png': '/static/img/shop/tools/feedback.png',
-  'commission.png': '/static/img/shop/commission/commission_icon1.png',
-  'groupon.png': '/static/img/shop/goods/groupon-tag.png',
-  'faq.png': '/static/img/shop/tools/service.png',
-  'point.png': '/static/img/shop/user/wallet_icon.png',
-  'about-us.png': '/static/img/shop/tools/home.png',
-  'privacy.png': '/static/img/shop/tools/service.png',
-  'address.png': '/static/img/shop/user/address/edit.png',
-  'invoice.png': '/static/img/shop/order/nouse_coupon.png',
-  'chat-index.png': '/static/img/shop/goods/message.png',
-};
 
 /** 芋道个人中心 MenuGrid 菜单项（与默认装修模板一致） */
 function diyMenuItem(title, url, iconFile) {
@@ -133,7 +84,7 @@ function diyMenuItem(title, url, iconFile) {
     subtitle: '',
     subtitleColor: '#bbb',
     badge: menuBadge,
-    iconUrl: menuIconMap[iconFile] || `${diyBase}/${iconFile}`,
+    iconUrl: `${diyBase}/${iconFile}`,
     url,
   };
 }
@@ -186,13 +137,13 @@ export function getMockDiyTemplate() {
             items: [
               {
                 type: 'img',
-                imgUrl: 'https://static.iocoder.cn/mall/banner-01.jpg',
+                imgUrl: '/static/diy/icons/banner-01.jpg',
                 videoUrl: '',
                 url: '',
               },
               {
                 type: 'img',
-                imgUrl: 'https://static.iocoder.cn/mall/banner-02.jpg',
+                imgUrl: '/static/diy/icons/banner-02.jpg',
                 videoUrl: '',
                 url: '',
               },
