@@ -1,25 +1,28 @@
 <!-- 个人中心：支持装修 -->
 <template>
-  <view v-if="showUserLoading" class="user-loading-wrap">
-    <s-page-loading type="user" :tip="userLoadingTip" />
-  </view>
-  <view v-else-if="template">
-    <s-layout
-      title="我的"
-      tabbar="/pages/index/user"
-      navbar="custom"
-      :bgStyle="template.page"
-      :navbarStyle="template.navigationBar"
-      onShareAppMessage
-    >
-      <s-block
-        v-for="(item, index) in template.components"
-        :key="index"
-        :styles="item.property.style"
+  <view v-if="template" class="user-page-root">
+    <s-page-loading v-if="showUserLoading" type="user" :tip="userLoadingTip" />
+    <view v-show="!showUserLoading">
+      <s-layout
+        title="我的"
+        tabbar="/pages/index/user"
+        navbar="custom"
+        :bgStyle="template.page"
+        :navbarStyle="template.navigationBar"
+        onShareAppMessage
       >
-        <s-block-item :type="item.id" :data="item.property" :styles="item.property.style" />
-      </s-block>
-    </s-layout>
+        <s-block
+          v-for="(item, index) in template.components"
+          :key="index"
+          :styles="item.property.style"
+        >
+          <s-block-item :type="item.id" :data="item.property" :styles="item.property.style" />
+        </s-block>
+      </s-layout>
+    </view>
+  </view>
+  <view v-else-if="showUserLoading" class="user-loading-wrap">
+    <s-page-loading type="user" :tip="userLoadingTip" />
   </view>
 </template>
 

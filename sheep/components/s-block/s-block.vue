@@ -33,13 +33,18 @@
 
   const elStyles = computed(() => {
     if (props.styles) {
+      const marginLeft = props.styles.marginLeft || 0;
+      const marginRight = props.styles.marginRight || 0;
       return {
-        width: '100%',
+        width:
+          marginLeft || marginRight
+            ? `calc(100% - ${marginLeft + marginRight}px)`
+            : '100%',
         boxSizing: 'border-box',
         marginTop: `${props.styles.marginTop || 0}px`,
         marginBottom: `${props.styles.marginBottom || 0}px`,
-        marginLeft: `${props.styles.marginLeft || 0}px`,
-        marginRight: `${props.styles.marginRight || 0}px`,
+        marginLeft: `${marginLeft}px`,
+        marginRight: `${marginRight}px`,
         paddingTop: `${props.styles.paddingTop || 0}px`,
         paddingRight: `${props.styles.paddingRight || 0}px`,
         paddingBottom: `${props.styles.paddingBottom || 0}px`,

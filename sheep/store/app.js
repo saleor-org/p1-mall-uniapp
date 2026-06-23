@@ -241,7 +241,7 @@ const adaptTenant = async () => {
 };
 
 /** 装修模板版本：变更后强制重载，避免 pinia 缓存旧首页布局 */
-const DIY_TEMPLATE_REVISION = 10;
+const DIY_TEMPLATE_REVISION = 15;
 
 /** Saleor：用后台分类替换首页金刚区静态 mock */
 const hydrateHomeMenuFromSaleor = async (diyTemplate) => {

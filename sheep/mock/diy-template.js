@@ -106,6 +106,25 @@ const homeMenuSwiperList = [
   ),
 ];
 
+const menuIconMap = {
+  'sign.png': '/static/img/shop/app/sign.png',
+  'recharge.png': '/static/img/shop/user/wallet_icon.png',
+  'withdraw.png': '/static/img/shop/commission/commission_icon2.png',
+  'setting.png': '/static/img/shop/tools/service.png',
+  'goods-collect.png': '/static/img/shop/tools/collect.png',
+  'goods-log.png': '/static/img/shop/tools/browse.png',
+  'feedback.png': '/static/img/shop/tools/feedback.png',
+  'commission.png': '/static/img/shop/commission/commission_icon1.png',
+  'groupon.png': '/static/img/shop/goods/groupon-tag.png',
+  'faq.png': '/static/img/shop/tools/service.png',
+  'point.png': '/static/img/shop/user/wallet_icon.png',
+  'about-us.png': '/static/img/shop/tools/home.png',
+  'privacy.png': '/static/img/shop/tools/service.png',
+  'address.png': '/static/img/shop/user/address/edit.png',
+  'invoice.png': '/static/img/shop/order/nouse_coupon.png',
+  'chat-index.png': '/static/img/shop/goods/message.png',
+};
+
 /** 芋道个人中心 MenuGrid 菜单项（与默认装修模板一致） */
 function diyMenuItem(title, url, iconFile) {
   return {
@@ -114,7 +133,7 @@ function diyMenuItem(title, url, iconFile) {
     subtitle: '',
     subtitleColor: '#bbb',
     badge: menuBadge,
-    iconUrl: `${diyBase}/${iconFile}`,
+    iconUrl: menuIconMap[iconFile] || `${diyBase}/${iconFile}`,
     url,
   };
 }
@@ -270,10 +289,10 @@ export function getMockDiyTemplate() {
         backgroundColor: '#f6f6f6',
       },
       navigationBar: {
-        styleType: 'normal',
+        styleType: 'inner',
         alwaysShow: false,
         bgType: 'color',
-        bgColor: '#fff',
+        bgColor: 'transparent',
       },
       style: { backgroundColor: '#f6f6f6' },
       components: [
