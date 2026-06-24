@@ -2,7 +2,7 @@
 <template>
   <view v-if="template" class="user-page-root">
     <s-page-loading v-if="showUserLoading" type="user" :tip="userLoadingTip" />
-    <view v-show="!showUserLoading">
+    <view v-if="!showUserLoading">
       <s-layout
         title="我的"
         tabbar="/pages/index/user"

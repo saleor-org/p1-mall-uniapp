@@ -1,7 +1,4 @@
-import packageInfo from '@/package.json';
 import { getWxEnvVersion } from '@/sheep/helper/env';
-
-const { version } = packageInfo;
 
 // 开发环境配置
 export let baseUrl;
@@ -31,8 +28,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 if (typeof baseUrl === 'undefined') {
   console.error('请检查.env配置文件是否存在');
-} else {
-  console.log(`[芋道商城 ${version}]  https://doc.iocoder.cn`);
 }
 
 export const apiPath = import.meta.env.SHOPRO_API_PATH;

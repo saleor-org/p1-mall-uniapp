@@ -1,9 +1,9 @@
 <!-- 商品分类列表 -->
 <template>
   <s-layout :bgStyle="{ color: '#fff' }" tabbar="/pages/index/category" title="分类">
-    <s-page-loading v-if="state.pageLoading" type="inline" tip="正在加载分类…" />
-    <view v-else class="s-category">
-      <view class="three-level-wrap ss-flex ss-col-top">
+    <view class="s-category">
+      <s-page-loading v-if="state.pageLoading" type="inline" tip="正在加载分类…" />
+      <view v-show="!state.pageLoading" class="three-level-wrap ss-flex ss-col-top">
         <!-- 商品分类（左） -->
         <view class="side-menu-wrap" :style="[{ top: Number(statusBarHeight + 88) + 'rpx' }]">
           <scroll-view scroll-y :style="[{ height: pageHeight + 'px' }]">
@@ -154,7 +154,10 @@
     onMenu(withChildren >= 0 ? withChildren : 0);
   }
   onShow(async () => {
-    state.pageLoading = true;
+    // 仅首屏全屏 loading；tab 切回时保留 scroll-view 挂载，避免 uni-h5 KeepAlive activated 访问 null DOM
+    if (!state.categoryList.length) {
+      state.pageLoading = true;
+    }
     try {
       await getList();
       initMenuIndex();

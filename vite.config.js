@@ -5,6 +5,19 @@ import path from 'path';
 import uniReadPagesV3Plugin from './sheep/router/utils/uni-read-pages-v3';
 import mpliveMainfestPlugin from './sheep/libs/mplive-manifest-plugin';
 
+function faviconDevMiddleware() {
+	return {
+		name: 'mall-favicon-dev',
+		configureServer(server) {
+			server.middlewares.use((req, res, next) => {
+				if (req.url === '/favicon.ico' || req.url === '/favicon.ico?') {
+					req.url = '/static/favicon.ico';
+				}
+				next();
+			});
+		},
+	};
+}
 
 // https://vitejs.dev/config/
 export default ({ mode }) => {
@@ -30,6 +43,7 @@ export default ({ mode }) => {
 		},
 		plugins: [
 			uni(),
+			faviconDevMiddleware(),
 			// viteCompression({
 			// 	verbose: false
 			// }),

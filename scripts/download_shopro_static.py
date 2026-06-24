@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import json
-import os
 import re
+import ssl
 import sys
 import urllib.error
 import urllib.request
@@ -14,7 +14,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 
+# file.sheepjs.com has valid shop/order PNGs; cert is expired so verify=False.
+SHEEPJS = "https://file.sheepjs.com"
+
 SOURCES = (
+    SHEEPJS,
     "http://mall.yudao.iocoder.cn",
     "http://test.yudao.iocoder.cn",
 )
@@ -67,6 +71,56 @@ IOCODER_BANNERS = [
     ("banner-02.jpg", "https://static.iocoder.cn/mall/banner-02.jpg"),
 ]
 
+# When remote diy/tabbar assets are unavailable, copy from bundled shop icons.
+DIY_FALLBACKS: dict[str, str] = {
+    # shop/app/sign.png is a 519×344 banner, not a menu icon
+    "sign.png": "img/shop/commission/commission_icon1.png",
+    "recharge.png": "img/shop/commission/commission_icon1.png",
+    "withdraw.png": "img/shop/commission/commission_icon2.png",
+    "setting.png": "img/shop/tools/home.png",
+    "goods-collect.png": "img/shop/tools/collect.png",
+    "goods-log.png": "img/shop/tools/browse.png",
+    "feedback.png": "img/shop/tools/feedback.png",
+    "commission.png": "img/shop/commission/commission_icon1.png",
+    "groupon.png": "img/shop/goods/groupon-tag.png",
+    "faq.png": "img/shop/tools/service.png",
+    "point.png": "img/shop/commission/commission_icon2.png",
+    "about-us.png": "img/shop/tools/home.png",
+    "privacy.png": "img/shop/tools/service.png",
+    "address.png": "img/shop/user/address/edit.png",
+    "invoice.png": "img/shop/tools/service.png",
+    "chat-index.png": "img/shop/goods/message.png",
+}
+
+TABBAR_FALLBACKS: dict[str, str] = {
+    "home.png": "img/shop/tools/home.png",
+    "home-active.png": "img/shop/tools/home.png",
+    "category.png": "img/shop/tools/browse.png",
+    "category-active.png": "img/shop/tools/browse.png",
+    "cart.png": "img/shop/order/nouse_coupon.png",
+    "cart-active.png": "img/shop/order/nouse_coupon.png",
+    "user.png": "img/shop/commission/commission_icon2.png",
+    "user-active.png": "img/shop/commission/commission_icon2.png",
+}
+
+_SSL_CTX = ssl.create_default_context()
+_SSL_CTX.check_hostname = False
+_SSL_CTX.verify_mode = ssl.CERT_NONE
+
+
+def _is_valid_image(data: bytes) -> bool:
+    if len(data) < 32:
+        return False
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return True
+    if data[:3] == b"\xff\xd8\xff":
+        return True
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return True
+    if data.lstrip().startswith(b"<!") or data.lstrip().startswith(b"<html"):
+        return False
+    return False
+
 
 def _collect_static_paths() -> list[str]:
     paths: set[str] = set()
@@ -95,11 +149,11 @@ def _collect_static_paths() -> list[str]:
 
 def _download(url: str, dest: Path) -> bool:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    req = urllib.request.Request(url, headers={"User-Agent": "saleor-mall-static-sync/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "saleor-mall-static-sync/2.0"})
     try:
-        with urllib.request.urlopen(req, timeout=12) as resp:
+        with urllib.request.urlopen(req, timeout=20, context=_SSL_CTX) as resp:
             data = resp.read()
-        if len(data) < 32:
+        if not _is_valid_image(data):
             return False
         dest.write_bytes(data)
         return True
@@ -107,14 +161,43 @@ def _download(url: str, dest: Path) -> bool:
         return False
 
 
+def _copy_fallback(rel_src: str, dest: Path) -> bool:
+    src = STATIC / rel_src
+    if not src.is_file():
+        return False
+    try:
+        data = src.read_bytes()
+    except OSError:
+        return False
+    if not _is_valid_image(data):
+        return False
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data)
+    return True
+
+
+def _file_valid(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    try:
+        return _is_valid_image(path.read_bytes())
+    except OSError:
+        return False
+
+
 def _fetch_path(static_path: str) -> bool:
     rel = static_path.removeprefix("/static/")
     dest = STATIC / rel
-    if dest.is_file() and dest.stat().st_size > 32:
+    if _file_valid(dest):
         return True
     for base in SOURCES:
         if _download(f"{base}{static_path}", dest):
             return True
+    filename = rel.rsplit("/", 1)[-1]
+    if rel.startswith("img/diy/") and filename in DIY_FALLBACKS:
+        return _copy_fallback(DIY_FALLBACKS[filename], dest)
+    if rel.startswith("img/shop/tabbar/") and filename in TABBAR_FALLBACKS:
+        return _copy_fallback(TABBAR_FALLBACKS[filename], dest)
     return False
 
 
@@ -132,7 +215,7 @@ def main() -> int:
     menu_dir.mkdir(parents=True, exist_ok=True)
     for filename, url in MENU_SWIPER_REMOTE:
         dest = menu_dir / filename
-        if dest.is_file() and dest.stat().st_size > 32:
+        if _file_valid(dest):
             ok += 1
             continue
         if _download(url, dest):
@@ -144,7 +227,7 @@ def main() -> int:
     banner_dir.mkdir(parents=True, exist_ok=True)
     for filename, url in IOCODER_BANNERS:
         dest = banner_dir / filename
-        if dest.is_file() and dest.stat().st_size > 32:
+        if _file_valid(dest):
             ok += 1
             continue
         if _download(url, dest):

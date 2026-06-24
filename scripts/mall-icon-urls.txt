@@ -1,0 +1,40 @@
+# 芋道商城 H5 图标 CDN 直链（与 yudao-mall-uniapp/.env SHOPRO_STATIC_URL 一致）
+# 浏览器能打开芋道 demo 时，这些链接应能直接下载 png
+# 保存到 p1-mall-uniapp/static/ 下相同相对路径，例如：
+#   img/diy/sign.png  →  static/img/diy/sign.png
+
+http://test.yudao.iocoder.cn/static/img/shop/order/no_pay.png
+http://test.yudao.iocoder.cn/static/img/shop/order/no_take.png
+http://test.yudao.iocoder.cn/static/img/shop/order/no_comment.png
+http://test.yudao.iocoder.cn/static/img/shop/order/change_order.png
+http://test.yudao.iocoder.cn/static/img/shop/order/all_order.png
+http://test.yudao.iocoder.cn/static/img/shop/order/nouse_coupon.png
+http://test.yudao.iocoder.cn/static/img/shop/order/useend_coupon.png
+http://test.yudao.iocoder.cn/static/img/shop/order/out_coupon.png
+http://test.yudao.iocoder.cn/static/img/shop/order/all_coupon.png
+http://test.yudao.iocoder.cn/static/img/shop/user/wallet_icon.png
+http://test.yudao.iocoder.cn/static/img/shop/default_avatar.png
+http://test.yudao.iocoder.cn/static/img/diy/sign.png
+http://test.yudao.iocoder.cn/static/img/diy/recharge.png
+http://test.yudao.iocoder.cn/static/img/diy/withdraw.png
+http://test.yudao.iocoder.cn/static/img/diy/setting.png
+http://test.yudao.iocoder.cn/static/img/diy/goods-collect.png
+http://test.yudao.iocoder.cn/static/img/diy/goods-log.png
+http://test.yudao.iocoder.cn/static/img/diy/feedback.png
+http://test.yudao.iocoder.cn/static/img/diy/commission.png
+http://test.yudao.iocoder.cn/static/img/diy/groupon.png
+http://test.yudao.iocoder.cn/static/img/diy/faq.png
+http://test.yudao.iocoder.cn/static/img/diy/point.png
+http://test.yudao.iocoder.cn/static/img/diy/about-us.png
+http://test.yudao.iocoder.cn/static/img/diy/privacy.png
+http://test.yudao.iocoder.cn/static/img/diy/address.png
+http://test.yudao.iocoder.cn/static/img/diy/invoice.png
+http://test.yudao.iocoder.cn/static/img/diy/chat-index.png
+http://test.yudao.iocoder.cn/static/img/shop/tabbar/home.png
+http://test.yudao.iocoder.cn/static/img/shop/tabbar/home-active.png
+http://test.yudao.iocoder.cn/static/img/shop/tabbar/category.png
+http://test.yudao.iocoder.cn/static/img/shop/tabbar/category-active.png
+http://test.yudao.iocoder.cn/static/img/shop/tabbar/cart.png
+http://test.yudao.iocoder.cn/static/img/shop/tabbar/cart-active.png
+http://test.yudao.iocoder.cn/static/img/shop/tabbar/user.png
+http://test.yudao.iocoder.cn/static/img/shop/tabbar/user-active.png

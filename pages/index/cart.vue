@@ -7,13 +7,13 @@
       :row-count="3"
     />
     <s-empty
-      v-else-if="state.list.length === 0"
+      v-else-if="!state.listLoading && state.list.length === 0"
       icon="/static/cart-empty.png"
       text="购物车空空如也,快去逛逛吧~"
     />
 
     <!-- 头部 -->
-    <view v-else class="cart-box ss-flex ss-flex-col ss-row-between">
+    <view v-show="!state.listLoading && state.list.length > 0" class="cart-box ss-flex ss-flex-col ss-row-between">
       <view class="cart-header ss-flex ss-col-center ss-row-between ss-p-x-30">
         <view class="header-left ss-flex ss-col-center ss-font-26">
           共

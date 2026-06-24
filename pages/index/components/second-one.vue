@@ -77,8 +77,7 @@
   import sheep from '@/sheep';
   import SpuApi from '@/sheep/api/product/spu';
 
-  const defaultCategoryImg =
-    'http://test.yudao.iocoder.cn/static/img/shop/menu/category.png';
+  const defaultCategoryImg = '/static/diy/icons/category.png';
 
   const props = defineProps({
     data: {
